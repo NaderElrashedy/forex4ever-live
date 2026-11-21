@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-
+import LiveComments from './LiveComments';
 export default function LivePage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -75,6 +75,7 @@ export default function LivePage() {
           إذا لم يكن هناك بث عام يعمل حاليًا، سيعرض YouTube رسالة أن الفيديو
           غير متاح. ستظهر الصورة تلقائيًا عند بدء البث العام من القناة.
         </p>
+            <LiveComments />
       </div>
     </section>
   );
