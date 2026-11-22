@@ -1,803 +1,511 @@
-import Link from "next/link";
-
-const features = [
+const courses = [
   {
-    icon: "🎓",
-    title: "أكاديمية مجانية",
+    number: "01",
+    title: "أساسيات التداول",
     description:
-      "محتوى عربي منظم يبدأ معك من أساسيات التداول وصولًا إلى بناء خطة تداول احترافية.",
+      "ابدأ من الصفر وتعرّف على سوق الفوركس، أزواج العملات، وكيفية تنفيذ الصفقات.",
+    chapters: [
+      {
+        title: "الفصل الأول: مقدمة إلى سوق الفوركس",
+        content:
+          "الفوركس هو سوق عالمي يتم فيه تداول العملات مقابل بعضها، مثل اليورو مقابل الدولار. يعمل السوق على مدار 24 ساعة خلال خمسة أيام أسبوعيًا.",
+      },
+      {
+        title: "الفصل الثاني: أزواج العملات",
+        content:
+          "كل صفقة فوركس تتضمن شراء عملة وبيع عملة أخرى. تنقسم الأزواج إلى أزواج رئيسية، وأزواج فرعية، وأزواج نادرة.",
+      },
+      {
+        title: "الفصل الثالث: النقطة واللوت",
+        content:
+          "النقطة هي وحدة قياس حركة السعر، بينما اللوت يعبّر عن حجم الصفقة. يجب اختيار حجم الصفقة بما يتناسب مع رأس المال والمخاطر.",
+      },
+      {
+        title: "الفصل الرابع: أوامر التداول",
+        content:
+          "توجد أوامر شراء وبيع مباشرة، وأوامر معلقة، وأوامر وقف خسارة وجني أرباح. تساعد هذه الأوامر على تنظيم الصفقة.",
+      },
+      {
+        title: "الفصل الخامس: حساب التداول",
+        content:
+          "يفضل البدء بحساب تجريبي لفهم منصة التداول وتجربة الأوامر قبل الانتقال إلى حساب حقيقي.",
+      },
+    ],
   },
   {
-    icon: "📡",
-    title: "بث مباشر",
+    number: "02",
+    title: "التحليل الفني",
     description:
-      "تابع البث المباشر والتحليلات التعليمية بعد إنشاء حساب مجاني وتسجيل الدخول.",
+      "تعلم قراءة الرسوم البيانية، الاتجاهات، الدعوم والمقاومات، والشموع اليابانية.",
+    chapters: [
+      {
+        title: "الفصل الأول: مفهوم التحليل الفني",
+        content:
+          "التحليل الفني هو دراسة حركة السعر السابقة بهدف تكوين رؤية عن الاتجاهات والاحتمالات المستقبلية.",
+      },
+      {
+        title: "الفصل الثاني: الاتجاهات",
+        content:
+          "الاتجاه قد يكون صاعدًا أو هابطًا أو عرضيًا. تحديد الاتجاه يساعد المتداول على تجنب الدخول عكس حركة السوق.",
+      },
+      {
+        title: "الفصل الثالث: الدعم والمقاومة",
+        content:
+          "الدعم منطقة قد يظهر عندها المشترون، والمقاومة منطقة قد يظهر عندها البائعون. هي مناطق وليست أسعارًا دقيقة دائمًا.",
+      },
+      {
+        title: "الفصل الرابع: الشموع اليابانية",
+        content:
+          "توضح الشمعة سعر الافتتاح والإغلاق وأعلى وأقل سعر خلال فترة زمنية محددة، وتساعد في فهم سلوك المشترين والبائعين.",
+      },
+      {
+        title: "الفصل الخامس: النماذج الفنية",
+        content:
+          "النماذج الفنية مثل المثلثات والقنوات والرأس والكتفين تساعد على قراءة حركة السعر، لكنها لا تضمن نتيجة الصفقة.",
+      },
+    ],
   },
   {
-    icon: "📱",
-    title: "متوافق مع جميع الأجهزة",
+    number: "03",
+    title: "إدارة رأس المال والمخاطر",
     description:
-      "استخدم المنصة بسهولة من الهاتف أو الكمبيوتر دون الحاجة إلى تثبيت تطبيق.",
+      "تعلم حماية رأس المال وتحديد حجم الصفقة واستخدام وقف الخسارة بطريقة صحيحة.",
+    chapters: [
+      {
+        title: "الفصل الأول: مفهوم إدارة المخاطر",
+        content:
+          "إدارة المخاطر تعني تحديد مقدار الخسارة المقبولة قبل الدخول في الصفقة، وليس محاولة منع الخسارة تمامًا.",
+      },
+      {
+        title: "الفصل الثاني: نسبة المخاطرة",
+        content:
+          "يفضل أن تكون المخاطرة في الصفقة الواحدة نسبة صغيرة من رأس المال، بحيث لا تؤثر سلسلة خسائر بشكل كبير على الحساب.",
+      },
+      {
+        title: "الفصل الثالث: وقف الخسارة",
+        content:
+          "وقف الخسارة هو أمر يغلق الصفقة عند وصول السعر إلى مستوى محدد، ويجب وضعه بناءً على التحليل وليس بصورة عشوائية.",
+      },
+      {
+        title: "الفصل الرابع: العائد مقابل المخاطرة",
+        content:
+          "تقارن هذه النسبة بين الربح المحتمل والخسارة المحتملة. يجب تقييمها قبل فتح الصفقة وليس بعدها.",
+      },
+      {
+        title: "الفصل الخامس: تجنب الإفراط في التداول",
+        content:
+          "فتح صفقات كثيرة أو استخدام أحجام كبيرة قد يزيد الخسائر. الجودة والانضباط أهم من عدد الصفقات.",
+      },
+    ],
+  },
+  {
+    number: "04",
+    title: "علم نفس التداول",
+    description:
+      "تعرف على تأثير الخوف والطمع وكيفية بناء الانضباط والالتزام بخطة التداول.",
+    chapters: [
+      {
+        title: "الفصل الأول: المشاعر والتداول",
+        content:
+          "الخوف والطمع من أكثر المشاعر تأثيرًا على قرارات المتداول، وقد يدفعان إلى إغلاق الصفقة مبكرًا أو المخاطرة الزائدة.",
+      },
+      {
+        title: "الفصل الثاني: الانضباط",
+        content:
+          "الانضباط يعني تنفيذ خطة التداول والالتزام بشروط الدخول والخروج وإدارة المخاطر دون قرارات عاطفية.",
+      },
+      {
+        title: "الفصل الثالث: تقبل الخسارة",
+        content:
+          "الخسارة جزء طبيعي من التداول. الهدف ليس الفوز في كل صفقة، بل الحفاظ على رأس المال وتحقيق نتائج متوازنة على المدى الطويل.",
+      },
+      {
+        title: "الفصل الرابع: تجنب الانتقام من السوق",
+        content:
+          "بعد الخسارة قد يحاول المتداول استرداد المال بسرعة، ما يؤدي إلى صفقات غير مدروسة ومخاطرة أكبر.",
+      },
+      {
+        title: "الفصل الخامس: سجل التداول",
+        content:
+          "يساعد سجل التداول في توثيق أسباب الدخول والخروج والنتائج والمشاعر، وبالتالي اكتشاف الأخطاء وتحسين الأداء.",
+      },
+    ],
+  },
+  {
+    number: "05",
+    title: "الاقتصاد والتحليل الأساسي",
+    description:
+      "افهم الأخبار الاقتصادية وأسعار الفائدة والتضخم وتأثيرها المحتمل على العملات.",
+    chapters: [
+      {
+        title: "الفصل الأول: التحليل الأساسي",
+        content:
+          "يدرس التحليل الأساسي الظروف الاقتصادية والسياسية والمالية التي قد تؤثر على قيمة العملات.",
+      },
+      {
+        title: "الفصل الثاني: أسعار الفائدة",
+        content:
+          "قرارات البنوك المركزية بشأن أسعار الفائدة قد تؤثر بقوة على العملات، لكن حركة السوق تعتمد أيضًا على توقعات المتداولين.",
+      },
+      {
+        title: "الفصل الثالث: التضخم",
+        content:
+          "يقيس التضخم ارتفاع أسعار السلع والخدمات. وقد يدفع ارتفاعه البنوك المركزية إلى تغيير سياستها النقدية.",
+      },
+      {
+        title: "الفصل الرابع: بيانات التوظيف",
+        content:
+          "تقدم بيانات التوظيف مؤشرات عن قوة الاقتصاد، وقد تؤدي النتائج المختلفة عن التوقعات إلى تحركات سريعة في السوق.",
+      },
+      {
+        title: "الفصل الخامس: التقويم الاقتصادي",
+        content:
+          "يعرض التقويم الاقتصادي مواعيد الأخبار والبيانات المهمة. يجب مراجعته قبل التداول لتجنب المفاجآت والتذبذب المرتفع.",
+      },
+    ],
+  },
+  {
+    number: "06",
+    title: "أساسيات العمل الاحترافي",
+    description:
+      "تعلم إعداد خطة تداول واختبار الاستراتيجية ومراجعة النتائج بصورة منظمة.",
+    chapters: [
+      {
+        title: "الفصل الأول: خطة التداول",
+        content:
+          "تحدد الخطة الأسواق التي ستتابعها، وشروط الدخول والخروج، ونسبة المخاطرة، والأوقات المناسبة للتداول.",
+      },
+      {
+        title: "الفصل الثاني: شروط الدخول",
+        content:
+          "يجب كتابة شروط واضحة للدخول في الصفقة، وتجنب الدخول بسبب الشعور أو الخوف من ضياع الفرصة.",
+      },
+      {
+        title: "الفصل الثالث: اختبار الاستراتيجية",
+        content:
+          "يمكن مراجعة أداء الاستراتيجية على بيانات سابقة أو حساب تجريبي قبل استخدامها بأموال حقيقية.",
+      },
+      {
+        title: "الفصل الرابع: مراجعة الأداء",
+        content:
+          "لا تُقيّم الاستراتيجية من صفقة واحدة. راجع مجموعة كافية من الصفقات مع حساب الربح والخسارة والمخاطرة.",
+      },
+      {
+        title: "الفصل الخامس: التطوير المستمر",
+        content:
+          "التداول يحتاج إلى التعلم والمراجعة والصبر. لا تغيّر الخطة بعد كل خسارة، ولا تتوقف عن تحسين نقاط الضعف.",
+      },
+    ],
   },
 ];
 
-const academyStats = [
-  {
-    value: "6 دورات",
-    label: "منهج تعليمي متدرج",
-  },
-  {
-    value: "30 فصلًا",
-    label: "شرح عربي مبسط",
-  },
-  {
-    value: "مجانية",
-    label: "بدون رسوم اشتراك",
-  },
-  {
-    value: "متوافقة",
-    label: "مع الهاتف والكمبيوتر",
-  },
-];
-
-const academyCourses = [
-  "أساسيات التداول",
-  "التحليل الفني",
-  "إدارة رأس المال والمخاطر",
-  "علم نفس التداول",
-  "الاقتصاد والتحليل الأساسي",
-  "أساسيات العمل الاحترافي",
-];
-
-export default function HomePage() {
+export default function AcademyPage() {
   return (
     <main
       dir="rtl"
       style={{
         minHeight: "100vh",
-        backgroundColor: "#080d14",
+        background:
+          "radial-gradient(circle at top right, rgba(233,190,76,0.10), transparent 35%), #09111d",
         color: "#ffffff",
-        fontFamily: "Arial, Tahoma, sans-serif",
-        overflowX: "hidden",
+        fontFamily: "Tahoma, Arial, sans-serif",
       }}
     >
-      {/* القائمة العلوية */}
-      <header
-        style={{
-          position: "relative",
-          zIndex: 10,
-          width: "100%",
-          backgroundColor: "rgba(8, 13, 20, 0.96)",
-          borderBottom: "1px solid rgba(230, 197, 99, 0.2)",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "1200px",
-            margin: "0 auto",
-            padding: "14px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "15px",
-            boxSizing: "border-box",
-          }}
-        >
-          {/* اللوجو واسم الموقع */}
-          <Link
-            href="/"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              color: "#ffffff",
-              textDecoration: "none",
-            }}
-          >
-            <img
-              src="/logo.jpg"
-              alt="Forex4Ever"
-              width="46"
-              height="46"
-              style={{
-                width: "46px",
-                height: "46px",
-                objectFit: "cover",
-                borderRadius: "50%",
-                border: "2px solid #e6c563",
-              }}
-            />
-
-            <div>
-              <strong
-                style={{
-                  display: "block",
-                  color: "#e6c563",
-                  fontSize: "20px",
-                  lineHeight: "1.2",
-                }}
-              >
-                Forex4Ever
-              </strong>
-
-              <span
-                style={{
-                  color: "#aeb7c4",
-                  fontSize: "11px",
-                }}
-              >
-                تعليم التداول باللغة العربية
-              </span>
-            </div>
-          </Link>
-
-          {/* روابط الموقع */}
-          <nav
-            aria-label="القائمة الرئيسية"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexWrap: "wrap",
-              gap: "8px",
-            }}
-          >
-            <Link
-              href="/"
-              style={{
-                padding: "10px 12px",
-                color: "#ffffff",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "700",
-              }}
-            >
-              الرئيسية
-            </Link>
-
-            <Link
-              href="/academy"
-              style={{
-                padding: "10px 12px",
-                color: "#e6c563",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "800",
-              }}
-            >
-              الأكاديمية المجانية
-            </Link>
-
-            <Link
-              href="/live"
-              style={{
-                padding: "10px 12px",
-                color: "#ffffff",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "700",
-              }}
-            >
-              البث المباشر
-            </Link>
-
-            <Link
-              href="/login"
-              style={{
-                padding: "10px 15px",
-                color: "#ffffff",
-                backgroundColor: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.14)",
-                borderRadius: "9px",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "700",
-              }}
-            >
-              تسجيل الدخول
-            </Link>
-
-            <Link
-              href="/signup"
-              style={{
-                padding: "10px 15px",
-                color: "#101722",
-                backgroundColor: "#e6c563",
-                border: "1px solid #e6c563",
-                borderRadius: "9px",
-                textDecoration: "none",
-                fontSize: "14px",
-                fontWeight: "800",
-              }}
-            >
-              إنشاء حساب مجاني
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* الواجهة الرئيسية */}
+      {/* مقدمة الأكاديمية */}
       <section
         style={{
-          position: "relative",
-          padding: "95px 20px 85px",
-          background:
-            "radial-gradient(circle at 20% 20%, rgba(230,197,99,0.13), transparent 30%), linear-gradient(135deg, #080d14 0%, #101925 55%, #080d14 100%)",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          padding: "80px 20px 60px",
+          textAlign: "center",
+          borderBottom: "1px solid rgba(233,190,76,0.20)",
         }}
       >
         <div
           style={{
-            width: "100%",
-            maxWidth: "1050px",
+            maxWidth: "1100px",
             margin: "0 auto",
-            textAlign: "center",
           }}
         >
           <span
             style={{
               display: "inline-block",
-              marginBottom: "20px",
-              padding: "8px 17px",
-              color: "#e6c563",
-              backgroundColor: "rgba(230,197,99,0.09)",
-              border: "1px solid rgba(230,197,99,0.35)",
+              color: "#e9be4c",
+              border: "1px solid rgba(233,190,76,0.45)",
               borderRadius: "999px",
-              fontSize: "14px",
-              fontWeight: "700",
+              padding: "10px 20px",
+              marginBottom: "24px",
+              background: "rgba(233,190,76,0.06)",
+              fontWeight: "bold",
             }}
           >
-            تعلّم التداول باللغة العربية
+            أكاديمية Forex4Ever المجانية
           </span>
 
           <h1
             style={{
-              maxWidth: "900px",
-              margin: "0 auto 22px",
-              color: "#ffffff",
-              fontSize: "clamp(38px, 7vw, 68px)",
-              lineHeight: "1.25",
-              fontWeight: "900",
+              margin: "0 0 20px",
+              fontSize: "clamp(36px, 6vw, 68px)",
+              lineHeight: "1.2",
             }}
           >
-            مرحبًا بك في{" "}
-            <span style={{ color: "#e6c563" }}>Forex4Ever</span>
+            تعلّم التداول{" "}
+            <span style={{ color: "#e9be4c" }}>خطوة بخطوة</span>
           </h1>
 
           <p
             style={{
-              maxWidth: "780px",
-              margin: "0 auto 35px",
-              color: "#c4ccd7",
-              fontSize: "clamp(17px, 2.4vw, 21px)",
-              lineHeight: "1.9",
+              maxWidth: "800px",
+              margin: "0 auto",
+              color: "#c8d1df",
+              fontSize: "clamp(17px, 2vw, 21px)",
+              lineHeight: "2",
             }}
           >
-            منصتك العربية للتعلّم ومتابعة البث المباشر، مع أكاديمية مجانية
-            تساعدك على فهم أساسيات التداول والتحليل وإدارة المخاطر بطريقة
-            بسيطة ومنظمة.
+            منهج عربي مجاني يساعدك على فهم أساسيات التداول والتحليل الفني
+            وإدارة المخاطر بطريقة بسيطة ومنظمة.
           </p>
 
           <div
             style={{
               display: "flex",
               justifyContent: "center",
-              alignItems: "center",
               flexWrap: "wrap",
-              gap: "13px",
+              gap: "12px",
+              marginTop: "30px",
             }}
           >
-            <Link
-              href="/academy"
-              style={{
-                display: "inline-block",
-                padding: "15px 27px",
-                color: "#101722",
-                backgroundColor: "#e6c563",
-                border: "1px solid #e6c563",
-                borderRadius: "10px",
-                textDecoration: "none",
-                fontSize: "16px",
-                fontWeight: "900",
-              }}
-            >
-              دخول الأكاديمية مجانًا
-            </Link>
-
-            <Link
-              href="/signup"
-              style={{
-                display: "inline-block",
-                padding: "15px 27px",
-                color: "#ffffff",
-                backgroundColor: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.18)",
-                borderRadius: "10px",
-                textDecoration: "none",
-                fontSize: "16px",
-                fontWeight: "800",
-              }}
-            >
-              إنشاء حساب مجاني
-            </Link>
+            <span style={statStyle}>6 دورات</span>
+            <span style={statStyle}>30 فصلًا</span>
+            <span style={statStyle}>محتوى عربي</span>
+            <span style={statStyle}>مجاني بالكامل</span>
           </div>
         </div>
       </section>
 
-      {/* مميزات المنصة */}
+      {/* الدورات */}
       <section
         style={{
-          padding: "75px 20px",
-          backgroundColor: "#0b111a",
+          maxWidth: "1200px",
+          margin: "0 auto",
+          padding: "60px 20px",
         }}
       >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "1150px",
-            margin: "0 auto",
-          }}
-        >
-          <div
+        <div style={{ marginBottom: "35px" }}>
+          <p
             style={{
-              maxWidth: "760px",
-              margin: "0 auto 42px",
-              textAlign: "center",
+              color: "#e9be4c",
+              fontWeight: "bold",
+              margin: "0 0 10px",
             }}
           >
-            <span
-              style={{
-                color: "#e6c563",
-                fontSize: "14px",
-                fontWeight: "800",
-              }}
-            >
-              خدمات Forex4Ever
-            </span>
-
-            <h2
-              style={{
-                margin: "10px 0 15px",
-                color: "#ffffff",
-                fontSize: "clamp(28px, 5vw, 42px)",
-                lineHeight: "1.4",
-              }}
-            >
-              كل ما تحتاجه في مكان واحد
-            </h2>
-
-            <p
-              style={{
-                margin: 0,
-                color: "#aeb7c4",
-                fontSize: "17px",
-                lineHeight: "1.8",
-              }}
-            >
-              محتوى تعليمي عربي وبث مباشر وتجربة سهلة على مختلف الأجهزة.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: "20px",
-            }}
-          >
-            {features.map((feature) => (
-              <article
-                key={feature.title}
-                style={{
-                  padding: "30px 24px",
-                  backgroundColor: "#101925",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "17px",
-                }}
-              >
-                <div
-                  style={{
-                    marginBottom: "17px",
-                    fontSize: "34px",
-                  }}
-                >
-                  {feature.icon}
-                </div>
-
-                <h3
-                  style={{
-                    margin: "0 0 12px",
-                    color: "#e6c563",
-                    fontSize: "21px",
-                  }}
-                >
-                  {feature.title}
-                </h3>
-
-                <p
-                  style={{
-                    margin: 0,
-                    color: "#b7c0cd",
-                    fontSize: "15px",
-                    lineHeight: "1.9",
-                  }}
-                >
-                  {feature.description}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* قسم الأكاديمية */}
-      <section
-        id="academy"
-        style={{
-          width: "100%",
-          padding: "85px 20px",
-          boxSizing: "border-box",
-          background:
-            "linear-gradient(135deg, #101722 0%, #182331 55%, #101722 100%)",
-          borderTop: "1px solid rgba(230,197,99,0.23)",
-          borderBottom: "1px solid rgba(230,197,99,0.23)",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "1150px",
-            margin: "0 auto",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: "850px",
-              margin: "0 auto 38px",
-              textAlign: "center",
-            }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                marginBottom: "15px",
-                padding: "7px 15px",
-                color: "#e6c563",
-                backgroundColor: "rgba(230,197,99,0.1)",
-                border: "1px solid rgba(230,197,99,0.35)",
-                borderRadius: "999px",
-                fontSize: "14px",
-                fontWeight: "800",
-              }}
-            >
-              تعليم عربي مجاني
-            </span>
-
-            <h2
-              style={{
-                margin: "0 0 18px",
-                color: "#ffffff",
-                fontSize: "clamp(30px, 5vw, 47px)",
-                lineHeight: "1.4",
-              }}
-            >
-              أكاديمية{" "}
-              <span style={{ color: "#e6c563" }}>Forex4Ever</span>
-            </h2>
-
-            <p
-              style={{
-                margin: 0,
-                color: "#cbd3df",
-                fontSize: "18px",
-                lineHeight: "1.95",
-              }}
-            >
-              تعلّم أساسيات التداول والتحليل الفني وإدارة رأس المال وعلم نفس
-              التداول من خلال محتوى عربي منظم، بداية من المستوى المبتدئ وحتى
-              بناء خطة تداول احترافية.
-            </p>
-          </div>
-
-          {/* إحصائيات الأكاديمية */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-              gap: "17px",
-              marginBottom: "35px",
-            }}
-          >
-            {academyStats.map((item) => (
-              <div
-                key={item.value}
-                style={{
-                  padding: "25px 17px",
-                  textAlign: "center",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.09)",
-                  borderRadius: "15px",
-                }}
-              >
-                <strong
-                  style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    color: "#e6c563",
-                    fontSize: "22px",
-                  }}
-                >
-                  {item.value}
-                </strong>
-
-                <span
-                  style={{
-                    color: "#c4ccd7",
-                    fontSize: "14px",
-                    lineHeight: "1.7",
-                  }}
-                >
-                  {item.label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* محتويات الأكاديمية */}
-          <div
-            style={{
-              maxWidth: "900px",
-              margin: "0 auto 35px",
-              padding: "28px",
-              backgroundColor: "rgba(8,13,20,0.52)",
-              border: "1px solid rgba(230,197,99,0.18)",
-              borderRadius: "18px",
-            }}
-          >
-            <h3
-              style={{
-                margin: "0 0 22px",
-                color: "#ffffff",
-                textAlign: "center",
-                fontSize: "24px",
-              }}
-            >
-              ماذا ستتعلم داخل الأكاديمية؟
-            </h3>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                gap: "13px",
-              }}
-            >
-              {academyCourses.map((course, index) => (
-                <div
-                  key={course}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "11px",
-                    padding: "14px",
-                    color: "#d8dee8",
-                    backgroundColor: "rgba(255,255,255,0.035)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    borderRadius: "11px",
-                    lineHeight: "1.7",
-                  }}
-                >
-                  <span
-                    style={{
-                      minWidth: "30px",
-                      height: "30px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#101722",
-                      backgroundColor: "#e6c563",
-                      borderRadius: "50%",
-                      fontSize: "13px",
-                      fontWeight: "900",
-                    }}
-                  >
-                    {index + 1}
-                  </span>
-
-                  <span style={{ fontWeight: "700" }}>{course}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ textAlign: "center" }}>
-            <Link
-              href="/academy"
-              style={{
-                display: "inline-block",
-                padding: "15px 32px",
-                color: "#101722",
-                backgroundColor: "#e6c563",
-                borderRadius: "10px",
-                textDecoration: "none",
-                fontSize: "17px",
-                fontWeight: "900",
-              }}
-            >
-              افتح صفحة الأكاديمية
-            </Link>
-
-            <p
-              style={{
-                maxWidth: "700px",
-                margin: "20px auto 0",
-                color: "#8f99a8",
-                fontSize: "13px",
-                lineHeight: "1.8",
-              }}
-            >
-              المحتوى تعليمي فقط وليس نصيحة استثمارية. التداول ينطوي على
-              مخاطر وقد يؤدي إلى خسارة جزء من رأس المال أو كله.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* قسم البث المباشر */}
-      <section
-        style={{
-          padding: "80px 20px",
-          backgroundColor: "#080d14",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "950px",
-            margin: "0 auto",
-            padding: "45px 25px",
-            textAlign: "center",
-            backgroundColor: "#101925",
-            border: "1px solid rgba(255,255,255,0.09)",
-            borderRadius: "20px",
-          }}
-        >
-          <span
-            style={{
-              display: "inline-block",
-              marginBottom: "16px",
-              color: "#ff6b6b",
-              fontSize: "15px",
-              fontWeight: "800",
-            }}
-          >
-            ● البث المباشر
-          </span>
+            المنهج التعليمي
+          </p>
 
           <h2
             style={{
-              margin: "0 0 15px",
-              color: "#ffffff",
-              fontSize: "clamp(28px, 5vw, 40px)",
+              fontSize: "clamp(28px, 4vw, 42px)",
+              margin: "0 0 12px",
             }}
           >
-            تابع بث Forex4Ever
+            دورات الأكاديمية
           </h2>
 
           <p
             style={{
-              maxWidth: "680px",
-              margin: "0 auto 28px",
-              color: "#b8c1ce",
-              fontSize: "17px",
+              color: "#aeb9c9",
               lineHeight: "1.9",
+              margin: 0,
             }}
           >
-            أنشئ حسابًا مجانيًا وسجّل الدخول لمشاهدة البث المباشر والمحتوى
-            المتاح للمستخدمين المسجلين.
+            اضغط على أي فصل لقراءة محتواه، ويفضل دراسة الدورات بالترتيب.
           </p>
+        </div>
 
-          <Link
-            href="/live"
-            style={{
-              display: "inline-block",
-              padding: "14px 29px",
-              color: "#101722",
-              backgroundColor: "#e6c563",
-              borderRadius: "10px",
-              textDecoration: "none",
-              fontWeight: "900",
-            }}
-          >
-            الانتقال إلى البث
-          </Link>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "24px",
+          }}
+        >
+          {courses.map((course) => (
+            <article
+              key={course.number}
+              style={{
+                background: "#101a28",
+                border: "1px solid rgba(255,255,255,0.09)",
+                borderRadius: "18px",
+                padding: "24px",
+                boxShadow: "0 18px 45px rgba(0,0,0,0.18)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  marginBottom: "18px",
+                }}
+              >
+                <span
+                  style={{
+                    width: "52px",
+                    height: "52px",
+                    flexShrink: 0,
+                    borderRadius: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#07101b",
+                    background: "#e9be4c",
+                    fontWeight: "bold",
+                    fontSize: "18px",
+                  }}
+                >
+                  {course.number}
+                </span>
+
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: "23px",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  {course.title}
+                </h3>
+              </div>
+
+              <p
+                style={{
+                  color: "#b6c0ce",
+                  lineHeight: "1.9",
+                  minHeight: "68px",
+                  margin: "0 0 22px",
+                }}
+              >
+                {course.description}
+              </p>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: "10px",
+                }}
+              >
+                {course.chapters.map((chapter, index) => (
+                  <details
+                    key={chapter.title}
+                    style={{
+                      background: "#0b1420",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "12px",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <summary
+                      style={{
+                        cursor: "pointer",
+                        padding: "16px",
+                        color: "#ffffff",
+                        fontWeight: "bold",
+                        lineHeight: "1.7",
+                      }}
+                    >
+                      {index + 1}. {chapter.title}
+                    </summary>
+
+                    <div
+                      style={{
+                        padding: "0 16px 18px",
+                        color: "#b8c3d2",
+                        lineHeight: "2",
+                        borderTop: "1px solid rgba(255,255,255,0.06)",
+                      }}
+                    >
+                      <p style={{ margin: "15px 0 0" }}>
+                        {chapter.content}
+                      </p>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
-      {/* التذييل */}
-      <footer
+      {/* تنبيه المخاطر */}
+      <section
         style={{
-          padding: "35px 20px",
-          backgroundColor: "#060a10",
-          borderTop: "1px solid rgba(255,255,255,0.07)",
+          maxWidth: "1160px",
+          margin: "0 auto",
+          padding: "0 20px 70px",
         }}
       >
         <div
           style={{
-            maxWidth: "1150px",
-            margin: "0 auto",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "20px",
+            border: "1px solid rgba(233,190,76,0.35)",
+            borderRadius: "18px",
+            padding: "25px",
+            background: "rgba(233,190,76,0.06)",
           }}
         >
-          <div>
-            <strong
-              style={{
-                display: "block",
-                marginBottom: "7px",
-                color: "#e6c563",
-                fontSize: "18px",
-              }}
-            >
-              Forex4Ever
-            </strong>
-
-            <span
-              style={{
-                color: "#8993a1",
-                fontSize: "13px",
-              }}
-            >
-              جميع الحقوق محفوظة © 2026
-            </span>
-          </div>
-
-          <div
+          <h2
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "17px",
+              color: "#e9be4c",
+              margin: "0 0 12px",
+              fontSize: "22px",
             }}
           >
-            <Link
-              href="/academy"
-              style={{
-                color: "#c3cbd6",
-                textDecoration: "none",
-                fontSize: "14px",
-              }}
-            >
-              الأكاديمية
-            </Link>
+            ⚠️ تنبيه مهم بشأن المخاطر
+          </h2>
 
-            <Link
-              href="/live"
-              style={{
-                color: "#c3cbd6",
-                textDecoration: "none",
-                fontSize: "14px",
-              }}
-            >
-              البث المباشر
-            </Link>
-
-            <Link
-              href="/login"
-              style={{
-                color: "#c3cbd6",
-                textDecoration: "none",
-                fontSize: "14px",
-              }}
-            >
-              تسجيل الدخول
-            </Link>
-          </div>
+          <p
+            style={{
+              margin: 0,
+              color: "#d5dbe4",
+              lineHeight: "2",
+            }}
+          >
+            المحتوى الموجود في الأكاديمية تعليمي فقط ولا يمثل توصية استثمارية.
+            تداول العملات والعقود مقابل الفروقات ينطوي على مخاطر مرتفعة وقد
+            يؤدي إلى خسارة رأس المال. استخدم حسابًا تجريبيًا وتأكد من فهم
+            المخاطر قبل التداول بأموال حقيقية.
+          </p>
         </div>
-      </footer>
+
+        <div
+          style={{
+            textAlign: "center",
+            marginTop: "35px",
+          }}
+        >
+          <a
+            href="/"
+            style={{
+              display: "inline-block",
+              padding: "14px 28px",
+              borderRadius: "10px",
+              background: "#e9be4c",
+              color: "#07101b",
+              textDecoration: "none",
+              fontWeight: "bold",
+            }}
+          >
+            العودة إلى الصفحة الرئيسية
+          </a>
+        </div>
+      </section>
     </main>
   );
 }
+
+const statStyle = {
+  display: "inline-block",
+  padding: "10px 16px",
+  borderRadius: "10px",
+  background: "#111c2b",
+  border: "1px solid rgba(255,255,255,0.10)",
+  color: "#dce3ec",
+  fontWeight: "bold",
+};
