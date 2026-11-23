@@ -69,43 +69,7 @@ export default function HomePage() {
       <div className="glow glow-two" aria-hidden="true" />
 
       {/* القائمة الرئيسية */}
-      <header className="main-header">
-        <div className="header-container">
-          <Link href="/" className="brand" aria-label="Forex4Ever الرئيسية">
-            <span className="brand-chart" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
-            </span>
-
-            <span className="brand-name">
-              Forex<span>4Ever</span>
-            </span>
-          </Link>
-
-          <nav className="main-nav" aria-label="القائمة الرئيسية">
-            <Link href="/">الرئيسية</Link>
-            <Link href="/academy">الأكاديمية المجانية</Link>
-            <Link href="/live" className="live-link">
-              <span className="live-dot" />
-              البث المباشر
-            </Link>
-    <Link href="/markets">الأسواق</Link>
-    <Link href="/news">الأخبار</Link>
-          </nav>
-
-          <div className="account-actions">
-            <Link href="/login" className="login-button">
-              تسجيل الدخول
-            </Link>
-
-            <Link href="/signup" className="signup-button">
-              إنشاء حساب
-            </Link>
-          </div>
-        </div>
-      </header>
+   
 
       {/* شريط الأسعار */}
       <section className="market-ticker" aria-label="أسعار توضيحية">
