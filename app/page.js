@@ -1,14 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
-const marketItems = [
-  { symbol: "EUR/USD", price: "1.0842", change: "+0.18%", type: "up" },
-  { symbol: "GBP/USD", price: "1.2678", change: "+0.11%", type: "up" },
-  { symbol: "USD/JPY", price: "149.62", change: "-0.09%", type: "down" },
-  { symbol: "XAU/USD", price: "2,034.70", change: "+0.34%", type: "up" },
-  { symbol: "BTC/USD", price: "63,840", change: "-0.21%", type: "down" },
-];
 
 const features = [
   {
@@ -59,6 +53,101 @@ const learningSteps = [
     text: "اختبر خطتك على حساب تجريبي وسجّل نتائجك قبل التفكير في التداول الحقيقي.",
   },
 ];
+function HomeLiveTicker() {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const container = containerRef.current;
+    container.innerHTML = "";
+
+    const widget = document.createElement("div");
+    widget.className = "tradingview-widget-container__widget";
+
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src =
+      "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+    script.async = true;
+
+    script.innerHTML = JSON.stringify({
+      symbols: [
+        {
+          proName: "OANDA:XAUUSD",
+          title: "الذهب",
+        },
+        {
+          proName: "OANDA:XAGUSD",
+          title: "الفضة",
+        },
+        {
+          proName: "OANDA:EURUSD",
+          title: "EUR/USD",
+        },
+        {
+          proName: "OANDA:GBPUSD",
+          title: "GBP/USD",
+        },
+        {
+          proName: "OANDA:USDJPY",
+          title: "USD/JPY",
+        },
+        {
+          proName: "BINANCE:BTCUSDT",
+          title: "Bitcoin",
+        },
+        {
+          proName: "BINANCE:ETHUSDT",
+          title: "Ethereum",
+        },
+        {
+          proName: "FOREXCOM:SPXUSD",
+          title: "S&P 500",
+        },
+        {
+          proName: "FOREXCOM:NSXUSD",
+          title: "Nasdaq 100",
+        },
+      ],
+      showSymbolLogo: true,
+      isTransparent: true,
+      displayMode: "adaptive",
+      colorTheme: "dark",
+      locale: "en",
+    });
+
+    container.appendChild(widget);
+    container.appendChild(script);
+
+    return () => {
+      container.innerHTML = "";
+    };
+  }, []);
+
+  return (
+    <section
+      style={{
+        width: "100%",
+        minHeight: "74px",
+        overflow: "hidden",
+        direction: "ltr",
+        background: "#080d13",
+        borderTop: "1px solid rgba(231, 185, 79, 0.22)",
+        borderBottom: "1px solid rgba(231, 185, 79, 0.22)",
+      }}
+    >
+      <div
+        ref={containerRef}
+        className="tradingview-widget-container"
+        style={{
+          width: "100%",
+          minHeight: "74px",
+        }}
+      />
+    </section>
+  );
+}
 
 export default function HomePage() {
   return (
@@ -73,26 +162,7 @@ export default function HomePage() {
 
       {/* شريط الأسعار */}
       <section className="market-ticker" aria-label="أسعار توضيحية">
-        <div className="ticker-label">
-          <span className="pulse-dot" />
-          حركة السوق
-        </div>
-
-        <div className="ticker-window">
-          <div className="ticker-track">
-            {[...marketItems, ...marketItems].map((item, index) => (
-              <div className="ticker-item" key={`${item.symbol}-${index}`}>
-                <strong>{item.symbol}</strong>
-                <span>{item.price}</span>
-                <em className={item.type}>
-                  {item.type === "up" ? "▲" : "▼"} {item.change}
-                </em>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <span className="ticker-note">أسعار توضيحية</span>
+      <HomeLiveTicker />
       </section>
 
       {/* القسم الرئيسي */}
