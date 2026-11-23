@@ -73,7 +73,7 @@ export default function LoginPage() {
         </form>
 
         <p className="form-footer">
-          ليس لديك حساب؟ <Link href="/register">أنشئ حسابًا مجانًا</Link>
+          ليس لديك حساب؟ <Link href="/signup">أنشئ حسابًا مجانًا</Link>
         </p>
       </div>
     </section>
