@@ -3,95 +3,102 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
-
 const features = [
   {
+    number: "01",
     icon: "🎓",
-    title: "الأكاديمية المجانية",
+    title: "أكاديمية التداول",
     description:
-      "ابدأ من الأساسيات وتعلّم التحليل الفني وإدارة رأس المال وعلم نفس التداول بخطوات واضحة.",
-    href: "/academy",
-    button: "ابدأ التعلّم",
+      "تعلّم أساسيات الفوركس والتحليل الفني وإدارة المخاطر من خلال محتوى عربي منظم ومناسب للمبتدئين.",
+    link: "/academy",
+    linkText: "ابدأ التعلّم",
   },
   {
-    icon: "🔴",
+    number: "02",
+    icon: "📡",
     title: "البث المباشر",
     description:
-      "تابع جلسات السوق والتحليلات المباشرة بعد تسجيل الدخول إلى حسابك المجاني.",
-    href: "/live",
-    button: "الدخول إلى البث",
+      "تابع جلسات السوق والتحليلات المباشرة، وشاهد أهم التحركات والفرص أثناء ساعات التداول.",
+    link: "/live",
+    linkText: "مشاهدة البث",
   },
   {
+    number: "03",
     icon: "📊",
-    title: "فهم حركة السعر",
+    title: "تحليل الأسواق",
     description:
-      "تعرّف على الاتجاهات ومناطق الدعم والمقاومة والشموع اليابانية بطريقة عملية.",
-    href: "/academy",
-    button: "استكشف الدروس",
+      "طوّر قدرتك على قراءة الرسوم البيانية وفهم الاتجاهات ومستويات الدعم والمقاومة بصورة عملية.",
+    link: "/academy",
+    linkText: "استكشف المحتوى",
   },
 ];
 
 const learningSteps = [
   {
     number: "01",
-    title: "تعلّم الأساسيات",
-    text: "افهم سوق الفوركس، أزواج العملات، النقطة، السبريد والرافعة المالية.",
+    title: "ابدأ من الأساسيات",
+    description: "تعرّف على سوق الفوركس والمصطلحات الأساسية وطريقة تحرك الأسعار.",
   },
   {
     number: "02",
-    title: "اقرأ الشارت",
-    text: "تعلّم الاتجاهات والدعم والمقاومة والشموع وأساسيات التحليل الفني.",
+    title: "تعلّم قراءة الشارت",
+    description: "افهم الاتجاهات والشموع اليابانية ومستويات الدعم والمقاومة.",
   },
   {
     number: "03",
-    title: "أدر المخاطر",
-    text: "حدّد حجم الصفقة ووقف الخسارة قبل الدخول، ولا تخاطر بما لا تستطيع تحمّل خسارته.",
+    title: "طبّق إدارة المخاطر",
+    description: "تعلّم حماية رأس المال وتحديد حجم الصفقة ووقف الخسارة.",
   },
   {
     number: "04",
     title: "طوّر خطتك",
-    text: "اختبر خطتك على حساب تجريبي وسجّل نتائجك قبل التفكير في التداول الحقيقي.",
+    description: "أنشئ خطة تداول واضحة وسجّل نتائجك وطوّر أداءك باستمرار.",
   },
 ];
+
 function HomeLiveTicker() {
-  const containerRef = useRef(null);
+  const tickerRef = useRef(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = tickerRef.current;
 
-    const container = containerRef.current;
+    if (!container) {
+      return undefined;
+    }
+
     container.innerHTML = "";
 
-    const widget = document.createElement("div");
-    widget.className = "tradingview-widget-container__widget";
+    const widgetContainer = document.createElement("div");
+    widgetContainer.className = "tradingview-widget-container__widget";
+    container.appendChild(widgetContainer);
 
     const script = document.createElement("script");
-    script.type = "text/javascript";
     script.src =
       "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+    script.type = "text/javascript";
     script.async = true;
 
     script.innerHTML = JSON.stringify({
       symbols: [
         {
           proName: "OANDA:XAUUSD",
-          title: "الذهب",
+          title: "Gold / USD",
         },
         {
           proName: "OANDA:XAGUSD",
-          title: "الفضة",
+          title: "Silver / USD",
         },
         {
           proName: "OANDA:EURUSD",
-          title: "EUR/USD",
+          title: "EUR / USD",
         },
         {
           proName: "OANDA:GBPUSD",
-          title: "GBP/USD",
+          title: "GBP / USD",
         },
         {
           proName: "OANDA:USDJPY",
-          title: "USD/JPY",
+          title: "USD / JPY",
         },
         {
           proName: "BINANCE:BTCUSDT",
@@ -117,7 +124,6 @@ function HomeLiveTicker() {
       locale: "en",
     });
 
-    container.appendChild(widget);
     container.appendChild(script);
 
     return () => {
@@ -126,209 +132,346 @@ function HomeLiveTicker() {
   }, []);
 
   return (
-  <section
-    style={{
+    <div className="ticker-window">
+      <div
+        ref={tickerRef}
+        className="tradingview-widget-container ticker-widget"
+      >
+        <div className="ticker-loading">جارٍ تحميل أسعار الأسواق...</div>
+      </div>
+    </div>
+  );
+}
+
+function HomeMarketsCard() {
+  const marketsRef = useRef(null);
+
+  useEffect(() => {
+    const container = marketsRef.current;
+
+    if (!container) {
+      return undefined;
+    }
+
+    container.innerHTML = "";
+
+    const widgetContainer = document.createElement("div");
+    widgetContainer.className = "tradingview-widget-container__widget";
+    container.appendChild(widgetContainer);
+
+    const script = document.createElement("script");
+    script.src =
+      "https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js";
+    script.type = "text/javascript";
+    script.async = true;
+
+    script.innerHTML = JSON.stringify({
+      colorTheme: "dark",
+      dateRange: "1D",
+      showChart: true,
+      locale: "en",
+      largeChartUrl: "",
+      isTransparent: true,
+      showSymbolLogo: true,
+      showFloatingTooltip: false,
       width: "100%",
-      height: "100px",
-      padding: "0",
-      boxSizing: "border-box",
-      display: "flex",
-      alignItems: "center",
-      background: "#080d13",
-      borderTop: "1px solid rgba(231, 185, 79, 0.22)",
-      borderBottom: "1px solid rgba(231, 185, 79, 0.22)",
-      direction: "ltr",
-    }}
-  >
-    <div
-      ref={containerRef}
-      className="tradingview-widget-container"
-      style={{
-        width: "100%",
-        minHeight: "46px",
-        display: "flex",
-        alignItems: "center",
-      }}
-    />
-  </section>
-);
+      height: "100%",
+      plotLineColorGrowing: "rgba(37, 201, 151, 1)",
+      plotLineColorFalling: "rgba(255, 101, 119, 1)",
+      gridLineColor: "rgba(255, 255, 255, 0.06)",
+      scaleFontColor: "rgba(155, 167, 181, 1)",
+      belowLineFillColorGrowing: "rgba(37, 201, 151, 0.10)",
+      belowLineFillColorFalling: "rgba(255, 101, 119, 0.10)",
+      belowLineFillColorGrowingBottom: "rgba(37, 201, 151, 0)",
+      belowLineFillColorFallingBottom: "rgba(255, 101, 119, 0)",
+      symbolActiveColor: "rgba(231, 185, 79, 0.12)",
+      tabs: [
+        {
+          title: "Metals",
+          symbols: [
+            {
+              s: "OANDA:XAUUSD",
+              d: "Gold / USD",
+            },
+            {
+              s: "OANDA:XAGUSD",
+              d: "Silver / USD",
+            },
+            {
+              s: "TVC:GOLD",
+              d: "Gold",
+            },
+            {
+              s: "TVC:SILVER",
+              d: "Silver",
+            },
+          ],
+          originalTitle: "Metals",
+        },
+        {
+          title: "Forex",
+          symbols: [
+            {
+              s: "OANDA:EURUSD",
+              d: "EUR / USD",
+            },
+            {
+              s: "OANDA:GBPUSD",
+              d: "GBP / USD",
+            },
+            {
+              s: "OANDA:USDJPY",
+              d: "USD / JPY",
+            },
+            {
+              s: "OANDA:AUDUSD",
+              d: "AUD / USD",
+            },
+          ],
+          originalTitle: "Forex",
+        },
+        {
+          title: "Crypto",
+          symbols: [
+            {
+              s: "BINANCE:BTCUSDT",
+              d: "Bitcoin",
+            },
+            {
+              s: "BINANCE:ETHUSDT",
+              d: "Ethereum",
+            },
+            {
+              s: "BINANCE:BNBUSDT",
+              d: "BNB",
+            },
+            {
+              s: "BINANCE:SOLUSDT",
+              d: "Solana",
+            },
+          ],
+          originalTitle: "Crypto",
+        },
+        {
+          title: "Indices",
+          symbols: [
+            {
+              s: "FOREXCOM:SPXUSD",
+              d: "S&P 500",
+            },
+            {
+              s: "FOREXCOM:NSXUSD",
+              d: "Nasdaq 100",
+            },
+            {
+              s: "FOREXCOM:DJI",
+              d: "Dow Jones",
+            },
+            {
+              s: "CAPITALCOM:DE40",
+              d: "Germany 40",
+            },
+          ],
+          originalTitle: "Indices",
+        },
+      ],
+    });
+
+    container.appendChild(script);
+
+    return () => {
+      container.innerHTML = "";
+    };
+  }, []);
+
+  return (
+    <div className="trading-card">
+      <div className="market-card-header">
+        <div>
+          <span className="live-market-label">
+            <span className="live-market-dot" />
+            متابعة الأسواق
+          </span>
+
+          <h2>حركة الأسواق العالمية</h2>
+
+          <p>
+            تابع الذهب والعملات والعملات الرقمية والمؤشرات من بطاقة واحدة.
+          </p>
+        </div>
+
+        <div className="market-status">
+          <span />
+          بيانات السوق
+        </div>
+      </div>
+
+      <div className="market-widget-frame">
+        <div
+          ref={marketsRef}
+          className="tradingview-widget-container markets-widget"
+        >
+          <div className="markets-loading">
+            <span className="loading-mark">F4</span>
+            <strong>جارٍ تحميل بيانات الأسواق...</strong>
+            <small>قد يستغرق تحميل الأسعار بضع ثوانٍ</small>
+          </div>
+        </div>
+      </div>
+
+      <div className="market-card-footer">
+        <span>البيانات مقدمة بواسطة TradingView</span>
+        <span>قد تتأخر الأسعار حسب السوق ومصدر البيانات</span>
+      </div>
+    </div>
+  );
 }
 
 export default function HomePage() {
   return (
-    <main className="site">
-      {/* خلفية التصميم */}
-      <div className="background-grid" aria-hidden="true" />
-      <div className="glow glow-one" aria-hidden="true" />
-      <div className="glow glow-two" aria-hidden="true" />
+    <main className="home-page">
+      <div className="background-grid" />
+      <div className="background-glow glow-one" />
+      <div className="background-glow glow-two" />
 
-      {/* القائمة الرئيسية */}
-   
+      <header className="main-header">
+        <div className="header-container">
+          <Link href="/" className="brand" aria-label="Forex4Ever الرئيسية">
+            <span className="brand-mark">F4</span>
 
-      {/* شريط الأسعار */}
-      <section className="market-ticker" aria-label="أسعار توضيحية">
-      <HomeLiveTicker />
+            <span className="brand-text">
+              <strong>Forex4Ever</strong>
+              <small>Trading Academy</small>
+            </span>
+          </Link>
+
+          <nav className="main-nav" aria-label="التنقل الرئيسي">
+            <Link href="/">الرئيسية</Link>
+            <Link href="/academy">الأكاديمية</Link>
+            <Link href="/live">البث المباشر</Link>
+          </nav>
+
+          <div className="account-actions">
+            <Link href="/login" className="login-button">
+              تسجيل الدخول
+            </Link>
+
+            <Link href="/signup" className="signup-button">
+              إنشاء حساب
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <section className="market-ticker" aria-label="شريط أسعار الأسواق">
+        <div className="ticker-label">
+          <span className="ticker-live-dot" />
+
+          <span>
+            <strong>الأسواق</strong>
+            <small className="ticker-note">متابعة مباشرة</small>
+          </span>
+        </div>
+
+        <HomeLiveTicker />
       </section>
 
-      {/* القسم الرئيسي */}
       <section className="hero">
         <div className="hero-content">
           <div className="eyebrow">
-            <span>✦</span>
-            تعلّم التداول بوعي وانضباط
+            <span className="eyebrow-dot" />
+            تعلّم، تابع، وطوّر قراراتك
           </div>
 
           <h1>
-            افهم السوق قبل أن
-            <span className="gold-text"> تتخذ قرارك</span>
+            طريقك لفهم
+            <span> الأسواق المالية</span>
+            يبدأ من هنا
           </h1>
 
           <p className="hero-description">
-            منصّة عربية تساعدك على تعلّم أساسيات التداول، قراءة الشارت،
-            إدارة المخاطر وبناء خطة تداول واضحة من خلال الأكاديمية المجانية
-            والبث المباشر.
+            منصة عربية تساعدك على تعلّم التداول ومتابعة تحركات الأسواق
+            والتحليلات، من خلال محتوى واضح وتجربة بسيطة تناسب جميع الأجهزة.
           </p>
 
           <div className="hero-buttons">
-            <Link href="/academy" className="primary-button">
-              ابدأ الأكاديمية مجانًا
+            <Link href="/signup" className="primary-button">
+              ابدأ مجانًا
               <span>←</span>
             </Link>
 
-            <Link href="/live" className="secondary-button">
+            <Link href="/academy" className="secondary-button">
               <span className="play-icon">▶</span>
-              مشاهدة البث
+              استكشف الأكاديمية
             </Link>
           </div>
 
           <div className="hero-points">
-            <span>✓ محتوى عربي</span>
-            <span>✓ تسجيل مجاني</span>
-            <span>✓ مناسب للمبتدئين</span>
+            <span>
+              <i>✓</i>
+              محتوى عربي
+            </span>
+
+            <span>
+              <i>✓</i>
+              تسجيل مجاني
+            </span>
+
+            <span>
+              <i>✓</i>
+              متوافق مع الهاتف
+            </span>
           </div>
         </div>
 
-        {/* بطاقة الشارت */}
-        <div className="trading-card">
-          <div className="card-light" />
-
-          <div className="chart-header">
-            <div>
-              <span className="pair-name">XAU / USD</span>
-              <small>الذهب مقابل الدولار</small>
-            </div>
-
-            <div className="market-status">
-              <span />
-              MARKET
-            </div>
-          </div>
-
-          <div className="price-row">
-            <strong>2,034.70</strong>
-            <span>+0.34%</span>
-          </div>
-
-          <div className="chart-area">
-            <div className="chart-grid" />
-
-            <div className="candles" aria-hidden="true">
-              <i className="candle red c1" />
-              <i className="candle green c2" />
-              <i className="candle green c3" />
-              <i className="candle red c4" />
-              <i className="candle green c5" />
-              <i className="candle green c6" />
-              <i className="candle red c7" />
-              <i className="candle green c8" />
-              <i className="candle green c9" />
-              <i className="candle red c10" />
-              <i className="candle green c11" />
-              <i className="candle green c12" />
-            </div>
-
-            <svg
-              className="line-chart"
-              viewBox="0 0 600 250"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <defs>
-                <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#e7b94f" stopOpacity="0.35" />
-                  <stop offset="100%" stopColor="#e7b94f" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-
-              <path
-                className="area-path"
-                d="M0,205 C45,198 60,170 100,180 C145,190 160,145 210,155 C255,165 270,115 320,130 C365,143 385,92 430,105 C475,118 500,58 600,42 L600,250 L0,250 Z"
-              />
-
-              <path
-                className="chart-path"
-                pathLength="1"
-                d="M0,205 C45,198 60,170 100,180 C145,190 160,145 210,155 C255,165 270,115 320,130 C365,143 385,92 430,105 C475,118 500,58 600,42"
-              />
-            </svg>
-
-            <div className="chart-price">2,034.70</div>
-          </div>
-
-          <div className="chart-footer">
-            <span>1H</span>
-            <span>4H</span>
-            <span className="active">1D</span>
-            <span>1W</span>
-            <span>1M</span>
-          </div>
+        <div className="hero-visual">
+          <HomeMarketsCard />
         </div>
       </section>
 
-      {/* الإحصائيات */}
-      <section className="stats-section">
+      <section className="stats-section" aria-label="مميزات المنصة">
         <div className="stat">
-          <strong>6</strong>
-          <span>دورات تعليمية</span>
+          <strong>مجاني</strong>
+          <span>إنشاء الحساب</span>
         </div>
 
         <div className="stat">
-          <strong>30</strong>
-          <span>فصلًا تعليميًا</span>
+          <strong>عربي</strong>
+          <span>المحتوى التعليمي</span>
         </div>
 
         <div className="stat">
-          <strong>100%</strong>
-          <span>محتوى مجاني</span>
+          <strong>متعدد</strong>
+          <span>الأسواق المتاحة</span>
         </div>
 
         <div className="stat">
           <strong>24/7</strong>
-          <span>وصول إلى الدروس</span>
+          <span>الوصول إلى الأكاديمية</span>
         </div>
       </section>
 
-      {/* المميزات */}
       <section className="section">
         <div className="section-heading">
-          <span>ماذا ستجد في Forex4Ever؟</span>
-          <h2>كل ما تحتاجه لبداية تعليمية منظّمة</h2>
+          <span>ماذا نقدم؟</span>
+          <h2>كل ما تحتاجه لتطوير معرفتك</h2>
           <p>
-            تعلّم خطوة بخطوة، وركّز على الفهم وإدارة المخاطر بدل القرارات
-            العشوائية.
+            أدوات تعليمية ومتابعة للأسواق تساعدك على بناء أساس واضح قبل اتخاذ
+            قرارات التداول.
           </p>
         </div>
 
         <div className="features-grid">
-          {features.map((feature, index) => (
-            <article className="feature-card" key={feature.title}>
-              <div className="card-number">0{index + 1}</div>
+          {features.map((feature) => (
+            <article className="feature-card" key={feature.number}>
+              <span className="card-number">{feature.number}</span>
               <div className="feature-icon">{feature.icon}</div>
+
               <h3>{feature.title}</h3>
               <p>{feature.description}</p>
 
-              <Link href={feature.href}>
-                {feature.button}
+              <Link href={feature.link}>
+                {feature.linkText}
                 <span>←</span>
               </Link>
             </article>
@@ -336,54 +479,45 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* خطوات التعلم */}
       <section className="learning-section">
-        <div className="learning-content">
-          <div className="section-heading right-heading">
-            <span>طريقك للتعلّم</span>
-            <h2>ابدأ بخطة، وليس بصفقة عشوائية</h2>
-            <p>
-              التداول يحتاج إلى معرفة وتدريب وانضباط. اتبع مسارًا تدريجيًا
-              واستخدم الحساب التجريبي قبل المخاطرة بأموال حقيقية.
-            </p>
-          </div>
+        <div className="section-heading right-heading">
+          <span>خطوات واضحة</span>
+          <h2>تعلّم التداول خطوة بخطوة</h2>
+
+          <p>
+            لا تحتاج إلى خبرة سابقة. ابدأ بالمفاهيم الأساسية، ثم انتقل تدريجيًا
+            إلى التحليل وإدارة المخاطر وبناء خطة التداول.
+          </p>
 
           <Link href="/academy" className="primary-button small-button">
-            تصفّح جميع الدورات
+            الدخول إلى الأكاديمية
             <span>←</span>
           </Link>
         </div>
 
         <div className="steps-list">
           {learningSteps.map((step) => (
-            <div className="learning-step" key={step.number}>
-              <div className="step-number">{step.number}</div>
+            <article className="learning-step" key={step.number}>
+              <span className="step-number">{step.number}</span>
 
               <div>
                 <h3>{step.title}</h3>
-                <p>{step.text}</p>
+                <p>{step.description}</p>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </section>
 
-      {/* الدعوة للتسجيل */}
       <section className="cta-section">
-        <div className="cta-chart" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-        </div>
-
         <div className="cta-content">
-          <span className="cta-label">ابدأ رحلتك التعليمية</span>
-          <h2>أنشئ حسابك المجاني وتابع المحتوى والبث المباشر</h2>
+          <span className="cta-label">ابدأ الآن</span>
+
+          <h2>أنشئ حسابك وابدأ رحلتك التعليمية مجانًا</h2>
+
           <p>
-            لا توجد اشتراكات مدفوعة. أنشئ حسابًا وابدأ تعلّم أساسيات السوق
-            وإدارة المخاطر.
+            سجّل بالبريد الإلكتروني وكلمة المرور للوصول إلى صفحات المنصة
+            ومتابعة المحتوى والبث المباشر.
           </p>
 
           <div className="cta-buttons">
@@ -397,39 +531,41 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+
+        <div className="cta-chart" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
       </section>
 
-      {/* تحذير المخاطر */}
       <section className="risk-warning">
         <span className="warning-icon">!</span>
 
         <div>
-          <strong>تنبيه مهم حول المخاطر</strong>
+          <strong>تنبيه مخاطر مهم</strong>
+
           <p>
-            المحتوى الموجود على Forex4Ever تعليمي فقط ولا يُعد توصية مالية.
-            التداول في الأسواق المالية ينطوي على مخاطر مرتفعة وقد يؤدي إلى
-            خسارة جزء من رأس المال أو كله. استخدم حسابًا تجريبيًا ولا تتداول
-            بأموال لا تستطيع تحمّل خسارتها.
+            التداول في الأسواق المالية ينطوي على درجة مرتفعة من المخاطر، وقد
+            يؤدي إلى خسارة جزء من رأس المال أو كله. المحتوى الموجود في المنصة
+            تعليمي فقط ولا يُعد نصيحة أو توصية استثمارية.
           </p>
         </div>
       </section>
 
-      {/* الفوتر */}
       <footer className="footer">
         <Link href="/" className="brand footer-brand">
-          <span className="brand-chart" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-            <i />
-          </span>
+          <span className="brand-mark">F4</span>
 
-          <span className="brand-name">
-            Forex<span>4Ever</span>
+          <span className="brand-text">
+            <strong>Forex4Ever</strong>
+            <small>Trading Academy</small>
           </span>
         </Link>
 
-        <p>منصّة عربية للتعليم والتوعية بأساسيات التداول وإدارة المخاطر.</p>
+        <p>منصة عربية لتعلّم التداول ومتابعة الأسواق المالية.</p>
 
         <div className="footer-links">
           <Link href="/">الرئيسية</Link>
@@ -439,12 +575,30 @@ export default function HomePage() {
         </div>
 
         <div className="copyright">
-          © {new Date().getFullYear()} Forex4Ever — جميع الحقوق محفوظة
+          © {new Date().getFullYear()} Forex4Ever. جميع الحقوق محفوظة.
         </div>
       </footer>
 
-      <style jsx global>{`
-        :root {
+      <style jsx>{`
+        :global(*) {
+          box-sizing: border-box;
+        }
+
+        :global(html) {
+          scroll-behavior: smooth;
+        }
+
+        :global(body) {
+          margin: 0;
+          background: #070b10;
+        }
+
+        :global(a) {
+          color: inherit;
+          text-decoration: none;
+        }
+
+        .home-page {
           --background: #070b10;
           --background-light: #0c121a;
           --card: rgba(15, 22, 31, 0.82);
@@ -455,57 +609,52 @@ export default function HomePage() {
           --red: #ff6577;
           --text: #f4f6f8;
           --muted: #9ba7b5;
-        }
 
-        * {
-          box-sizing: border-box;
-        }
-
-        html {
-          scroll-behavior: smooth;
-        }
-
-        body {
-          margin: 0;
-          background: var(--background);
-          color: var(--text);
-          font-family: Tahoma, Arial, sans-serif;
-        }
-
-        a {
-          color: inherit;
-          text-decoration: none;
-        }
-
-        .site {
           position: relative;
           min-height: 100vh;
           overflow: hidden;
+          color: var(--text);
           background:
-            radial-gradient(circle at 80% 10%, rgba(231, 185, 79, 0.08), transparent 25%),
-            linear-gradient(180deg, #070b10 0%, #090e14 50%, #070b10 100%);
+            radial-gradient(
+              circle at 85% 5%,
+              rgba(231, 185, 79, 0.07),
+              transparent 24%
+            ),
+            linear-gradient(180deg, #070b10 0%, #090e14 48%, #070b10 100%);
+          direction: rtl;
+          font-family:
+            Arial, "Segoe UI", Tahoma, sans-serif;
         }
 
         .background-grid {
           position: absolute;
           inset: 0;
+          z-index: 0;
           pointer-events: none;
-          opacity: 0.12;
+          opacity: 0.2;
           background-image:
-            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-          background-size: 55px 55px;
+            linear-gradient(
+              rgba(255, 255, 255, 0.025) 1px,
+              transparent 1px
+            ),
+            linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0.025) 1px,
+              transparent 1px
+            );
+          background-size: 45px 45px;
           mask-image: linear-gradient(to bottom, black, transparent 80%);
         }
 
-        .glow {
+        .background-glow {
           position: absolute;
+          z-index: 0;
           width: 420px;
           height: 420px;
           border-radius: 50%;
-          filter: blur(110px);
+          filter: blur(145px);
           pointer-events: none;
-          opacity: 0.11;
+          opacity: 0.08;
         }
 
         .glow-one {
@@ -522,7 +671,7 @@ export default function HomePage() {
 
         .main-header {
           position: relative;
-          z-index: 50;
+          z-index: 20;
           border-bottom: 1px solid var(--border);
           background: rgba(7, 11, 16, 0.82);
           backdrop-filter: blur(18px);
@@ -542,63 +691,49 @@ export default function HomePage() {
           display: inline-flex;
           align-items: center;
           gap: 11px;
-          font-weight: 900;
+          flex-shrink: 0;
         }
 
-        .brand-name {
-          font-size: 23px;
+        .brand-mark {
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          color: #0a0d11;
+          border-radius: 12px;
+          background: linear-gradient(135deg, var(--gold-light), var(--gold));
+          box-shadow: 0 10px 30px rgba(231, 185, 79, 0.18);
+          font-size: 14px;
+          font-weight: 950;
           direction: ltr;
         }
 
-        .brand-name span {
-          color: var(--gold);
+        .brand-text {
+          display: grid;
+          gap: 2px;
         }
 
-        .brand-chart {
-          width: 38px;
-          height: 38px;
-          display: flex;
-          align-items: flex-end;
-          justify-content: center;
-          gap: 3px;
-          padding: 7px;
-          border-radius: 10px;
-          border: 1px solid rgba(231, 185, 79, 0.28);
-          background: rgba(231, 185, 79, 0.08);
+        .brand-text strong {
+          font-size: 17px;
+          letter-spacing: 0.1px;
+          direction: ltr;
         }
 
-        .brand-chart i {
-          width: 4px;
-          border-radius: 4px 4px 1px 1px;
-          background: var(--gold);
-          animation: bars 2.4s ease-in-out infinite;
-        }
-
-        .brand-chart i:nth-child(1) {
-          height: 9px;
-        }
-
-        .brand-chart i:nth-child(2) {
-          height: 17px;
-          animation-delay: 0.25s;
-        }
-
-        .brand-chart i:nth-child(3) {
-          height: 13px;
-          animation-delay: 0.5s;
-        }
-
-        .brand-chart i:nth-child(4) {
-          height: 23px;
-          animation-delay: 0.75s;
+        .brand-text small {
+          color: var(--muted);
+          font-size: 8px;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          direction: ltr;
         }
 
         .main-nav {
           display: flex;
           align-items: center;
-          gap: 28px;
-          color: #c5ccd5;
-          font-size: 14px;
+          justify-content: center;
+          gap: 31px;
+          color: #bcc5ce;
+          font-size: 13px;
           font-weight: 700;
         }
 
@@ -610,134 +745,130 @@ export default function HomePage() {
           color: var(--gold-light);
         }
 
-        .live-link {
-          display: flex;
-          align-items: center;
-          gap: 7px;
-        }
-
-        .live-dot,
-        .pulse-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: var(--red);
-          box-shadow: 0 0 0 0 rgba(255, 101, 119, 0.5);
-          animation: pulse 1.8s infinite;
-        }
-
         .account-actions {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 9px;
+          flex-shrink: 0;
         }
 
         .login-button,
         .signup-button {
-          padding: 11px 17px;
+          padding: 10px 14px;
           border-radius: 9px;
-          font-size: 13px;
-          font-weight: 800;
+          font-size: 11px;
+          font-weight: 850;
           transition: 0.25s ease;
         }
 
         .login-button {
-          color: #d4d9df;
+          color: #d5dbe1;
           border: 1px solid var(--border);
+          background: rgba(255, 255, 255, 0.025);
         }
 
         .login-button:hover {
-          border-color: rgba(231, 185, 79, 0.5);
+          border-color: rgba(231, 185, 79, 0.3);
           color: var(--gold-light);
         }
 
         .signup-button {
-          color: #15120a;
+          color: #111;
+          border: 1px solid var(--gold);
           background: linear-gradient(135deg, var(--gold-light), var(--gold));
-          box-shadow: 0 8px 25px rgba(231, 185, 79, 0.16);
         }
 
-        .signup-button:hover,
-        .primary-button:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 13px 35px rgba(231, 185, 79, 0.25);
+        .signup-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 25px rgba(231, 185, 79, 0.2);
         }
 
         .market-ticker {
           position: relative;
-          z-index: 10;
-          height: 45px;
+          z-index: 15;
+          height: 48px;
           display: flex;
           align-items: center;
-          border-bottom: 1px solid var(--border);
-          background: rgba(255, 255, 255, 0.018);
           overflow: hidden;
+          border-bottom: 1px solid var(--border);
+          background: rgba(9, 14, 20, 0.94);
+          direction: ltr;
         }
 
         .ticker-label {
-          height: 100%;
+          position: relative;
+          z-index: 5;
           min-width: 135px;
+          height: 48px;
+          padding: 0 16px;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          color: #dce2e8;
+          gap: 9px;
+          color: var(--text);
+          border-right: 1px solid var(--border);
           background: #0d131b;
-          border-left: 1px solid var(--border);
-          font-size: 12px;
-          font-weight: 800;
-          z-index: 3;
+          direction: rtl;
+        }
+
+        .ticker-label > span:last-child {
+          display: grid;
+          gap: 2px;
+        }
+
+        .ticker-label strong {
+          font-size: 11px;
+        }
+
+        .ticker-note {
+          color: var(--muted);
+          font-size: 8px;
+        }
+
+        .ticker-live-dot {
+          width: 7px;
+          height: 7px;
+          flex: 0 0 7px;
+          border-radius: 50%;
+          background: var(--green);
+          box-shadow: 0 0 0 0 rgba(37, 201, 151, 0.45);
+          animation: pulseGreen 2s infinite;
         }
 
         .ticker-window {
           flex: 1;
+          min-width: 0;
+          height: 48px;
+          overflow: hidden;
+          direction: ltr;
+        }
+
+        .ticker-widget {
+          width: 100%;
+          height: 48px;
           overflow: hidden;
         }
 
-        .ticker-track {
-          width: max-content;
-          display: flex;
-          animation: ticker 28s linear infinite;
+        .ticker-widget :global(.tradingview-widget-container__widget) {
+          width: 100%;
+          height: 48px;
         }
 
-        .ticker-item {
-          height: 45px;
-          min-width: 215px;
+        .ticker-widget :global(iframe) {
+          display: block;
+          width: 100% !important;
+          height: 48px !important;
+          border: 0 !important;
+        }
+
+        .ticker-loading {
+          height: 48px;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
-          direction: ltr;
-          border-left: 1px solid rgba(255, 255, 255, 0.05);
-          font-size: 12px;
-        }
-
-        .ticker-item strong {
-          color: #f1f3f5;
-        }
-
-        .ticker-item span {
-          color: #aab3be;
-        }
-
-        .ticker-item em {
-          font-style: normal;
-          font-weight: 800;
-        }
-
-        .up {
-          color: var(--green);
-        }
-
-        .down {
-          color: var(--red);
-        }
-
-        .ticker-note {
-          padding: 0 15px;
-          color: #6f7a87;
+          color: var(--muted);
           font-size: 10px;
-          white-space: nowrap;
+          direction: rtl;
         }
 
         .hero {
@@ -746,93 +877,109 @@ export default function HomePage() {
           width: min(1180px, calc(100% - 40px));
           min-height: 650px;
           margin: auto;
-          padding: 90px 0;
+          padding: 75px 0 90px;
           display: grid;
           grid-template-columns: 1fr 0.95fr;
-          align-items: center;
           gap: 70px;
+          align-items: center;
         }
 
         .hero-content {
           animation: fadeUp 0.8s ease both;
         }
 
-        .eyebrow,
-        .cta-label {
+        .eyebrow {
           width: fit-content;
+          margin-bottom: 20px;
+          padding: 9px 13px;
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 8px 13px;
-          color: var(--gold-light);
-          border: 1px solid rgba(231, 185, 79, 0.2);
-          border-radius: 50px;
-          background: rgba(231, 185, 79, 0.07);
-          font-size: 12px;
-          font-weight: 800;
+          color: #d8c795;
+          border: 1px solid rgba(231, 185, 79, 0.18);
+          border-radius: 100px;
+          background: rgba(231, 185, 79, 0.055);
+          font-size: 10px;
+          font-weight: 850;
         }
 
-        .eyebrow span {
-          animation: rotateStar 5s linear infinite;
+        .eyebrow-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: var(--gold);
+          box-shadow: 0 0 13px rgba(231, 185, 79, 0.7);
         }
 
         .hero h1 {
           max-width: 650px;
-          margin: 22px 0;
-          font-size: clamp(40px, 5vw, 70px);
-          line-height: 1.2;
+          margin: 0;
+          font-size: clamp(42px, 5.4vw, 69px);
+          line-height: 1.16;
           letter-spacing: -2px;
         }
 
-        .gold-text {
+        .hero h1 span {
           display: block;
           color: transparent;
-          background: linear-gradient(90deg, var(--gold), #fff0b5, var(--gold));
+          background: linear-gradient(
+            90deg,
+            var(--gold),
+            var(--gold-light),
+            #c68c27,
+            var(--gold)
+          );
           background-size: 200% auto;
           background-clip: text;
           -webkit-background-clip: text;
-          animation: goldMove 4s linear infinite;
+          animation: goldMove 5s linear infinite;
         }
 
         .hero-description {
-          max-width: 630px;
-          margin: 0;
+          max-width: 600px;
+          margin: 25px 0 0;
           color: var(--muted);
-          font-size: 17px;
+          font-size: 16px;
           line-height: 2;
         }
 
         .hero-buttons,
         .cta-buttons {
-          margin-top: 32px;
+          margin-top: 30px;
           display: flex;
           align-items: center;
-          gap: 13px;
           flex-wrap: wrap;
+          gap: 12px;
         }
 
         .primary-button,
         .secondary-button {
-          min-height: 52px;
+          min-height: 49px;
+          padding: 0 21px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 12px;
-          padding: 0 24px;
+          gap: 11px;
           border-radius: 11px;
-          font-size: 14px;
+          font-size: 12px;
           font-weight: 900;
           transition: 0.25s ease;
         }
 
         .primary-button {
-          color: #17130a;
+          color: #111;
+          border: 1px solid var(--gold);
           background: linear-gradient(135deg, var(--gold-light), var(--gold));
-          box-shadow: 0 10px 30px rgba(231, 185, 79, 0.17);
+          box-shadow: 0 13px 35px rgba(231, 185, 79, 0.14);
+        }
+
+        .primary-button:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 16px 40px rgba(231, 185, 79, 0.24);
         }
 
         .secondary-button {
-          color: #e7ebef;
+          color: #e8ecf0;
           border: 1px solid var(--border);
           background: rgba(255, 255, 255, 0.025);
         }
@@ -847,106 +994,85 @@ export default function HomePage() {
           height: 28px;
           display: grid;
           place-items: center;
-          padding-left: 2px;
           color: var(--gold);
+          border: 1px solid rgba(231, 185, 79, 0.22);
           border-radius: 50%;
-          background: rgba(231, 185, 79, 0.11);
-          font-size: 10px;
+          font-size: 8px;
         }
 
         .hero-points {
           margin-top: 27px;
           display: flex;
+          align-items: center;
           flex-wrap: wrap;
           gap: 20px;
-          color: #8995a2;
-          font-size: 12px;
+          color: #909ba7;
+          font-size: 10px;
         }
 
-        .hero-points span::first-letter {
+        .hero-points span {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+        }
+
+        .hero-points i {
+          width: 17px;
+          height: 17px;
+          display: grid;
+          place-items: center;
           color: var(--green);
+          border: 1px solid rgba(37, 201, 151, 0.2);
+          border-radius: 50%;
+          font-size: 9px;
+          font-style: normal;
+        }
+
+        .hero-visual {
+          min-width: 0;
+          animation: fadeUp 0.9s 0.12s ease both;
         }
 
         .trading-card {
           position: relative;
-          min-width: 0;
+          width: 100%;
           padding: 24px;
           overflow: hidden;
-          border: 1px solid rgba(255, 255, 255, 0.11);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 22px;
-          background: linear-gradient(
-            145deg,
-            rgba(18, 27, 38, 0.94),
-            rgba(9, 14, 20, 0.94)
-          );
+          background:
+            radial-gradient(
+              circle at 80% 0%,
+              rgba(231, 185, 79, 0.08),
+              transparent 30%
+            ),
+            linear-gradient(
+              145deg,
+              rgba(17, 25, 35, 0.96),
+              rgba(9, 14, 20, 0.98)
+            );
           box-shadow: 0 30px 100px rgba(0, 0, 0, 0.4);
           animation: cardFloat 5s ease-in-out infinite;
         }
 
-        .trading-card::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          padding: 1px;
-          background: linear-gradient(
-            135deg,
-            rgba(231, 185, 79, 0.45),
-            transparent 35%,
-            rgba(37, 201, 151, 0.2)
-          );
-          mask:
-            linear-gradient(#fff 0 0) content-box,
-            linear-gradient(#fff 0 0);
-          mask-composite: exclude;
-          pointer-events: none;
-        }
-
-        .card-light {
-          position: absolute;
-          top: -120px;
-          right: -100px;
-          width: 260px;
-          height: 260px;
-          border-radius: 50%;
-          background: rgba(231, 185, 79, 0.12);
-          filter: blur(75px);
-        }
-
-        .chart-header,
-        .price-row,
-        .chart-footer {
-          position: relative;
-          z-index: 2;
+        .market-card-header {
+          min-height: 88px;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
+          gap: 16px;
         }
 
-        .pair-name {
-          display: block;
-          direction: ltr;
-          font-size: 15px;
-          font-weight: 900;
-        }
-
-        .chart-header small {
-          display: block;
-          margin-top: 5px;
-          color: #73808d;
-          font-size: 11px;
-        }
-
-        .market-status {
+        .live-market-label {
           display: flex;
           align-items: center;
           gap: 7px;
-          color: var(--green);
-          font-size: 10px;
+          color: var(--gold-light);
+          font-size: 9px;
           font-weight: 900;
         }
 
-        .market-status span {
+        .live-market-dot {
           width: 7px;
           height: 7px;
           border-radius: 50%;
@@ -954,154 +1080,133 @@ export default function HomePage() {
           animation: pulseGreen 2s infinite;
         }
 
-        .price-row {
-          margin-top: 23px;
-          direction: ltr;
-          justify-content: flex-start;
-          gap: 13px;
+        .market-card-header h2 {
+          margin: 9px 0 5px;
+          font-size: 20px;
         }
 
-        .price-row strong {
-          font-size: 30px;
-        }
-
-        .price-row span {
-          padding: 5px 8px;
-          color: var(--green);
-          border-radius: 6px;
-          background: rgba(37, 201, 151, 0.1);
-          font-size: 11px;
-          font-weight: 900;
-        }
-
-        .chart-area {
-          position: relative;
-          height: 260px;
-          margin: 22px 0;
-          overflow: hidden;
-        }
-
-        .chart-grid {
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
-          background-size: 100% 52px, 75px 100%;
-        }
-
-        .line-chart {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          overflow: visible;
-        }
-
-        .area-path {
-          fill: url(#chartFill);
-        }
-
-        .chart-path {
-          fill: none;
-          stroke: var(--gold);
-          stroke-width: 3;
-          stroke-linecap: round;
-          filter: drop-shadow(0 0 8px rgba(231, 185, 79, 0.55));
-          stroke-dasharray: 1;
-          stroke-dashoffset: 1;
-          animation: drawChart 2.8s ease forwards;
-        }
-
-        .chart-price {
-          position: absolute;
-          top: 31px;
-          left: 0;
-          padding: 5px 8px;
-          color: #181309;
-          background: var(--gold);
-          border-radius: 5px;
+        .market-card-header p {
+          margin: 0;
+          color: var(--muted);
           font-size: 10px;
-          font-weight: 900;
-          direction: ltr;
-          animation: priceGlow 2s ease-in-out infinite;
+          line-height: 1.6;
         }
 
-        .candles {
-          position: absolute;
-          inset: 0;
-          opacity: 0.19;
+        .market-status {
+          padding: 8px 10px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          white-space: nowrap;
+          color: #9da8b3;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.025);
+          font-size: 8px;
         }
 
-        .candle {
-          position: absolute;
+        .market-status span {
           width: 6px;
-          border-radius: 2px;
-          animation: candleMove 3s ease-in-out infinite alternate;
-        }
-
-        .candle::before {
-          content: "";
-          position: absolute;
-          width: 1px;
-          height: calc(100% + 18px);
-          top: -9px;
-          left: 50%;
-          background: inherit;
-        }
-
-        .candle.green {
+          height: 6px;
+          border-radius: 50%;
           background: var(--green);
         }
 
-        .candle.red {
-          background: var(--red);
-        }
-
-        .c1 { left: 5%; top: 68%; height: 20px; }
-        .c2 { left: 13%; top: 60%; height: 29px; }
-        .c3 { left: 21%; top: 54%; height: 21px; }
-        .c4 { left: 29%; top: 59%; height: 27px; }
-        .c5 { left: 37%; top: 45%; height: 35px; }
-        .c6 { left: 45%; top: 39%; height: 24px; }
-        .c7 { left: 53%; top: 45%; height: 30px; }
-        .c8 { left: 61%; top: 31%; height: 28px; }
-        .c9 { left: 69%; top: 26%; height: 33px; }
-        .c10 { left: 77%; top: 31%; height: 25px; }
-        .c11 { left: 85%; top: 17%; height: 31px; }
-        .c12 { left: 93%; top: 10%; height: 24px; }
-
-        .chart-footer {
-          color: #66727f;
-          font-size: 10px;
+        .market-widget-frame {
+          height: 520px;
+          margin-top: 14px;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 14px;
+          background: rgba(5, 8, 12, 0.55);
           direction: ltr;
         }
 
-        .chart-footer span {
-          padding: 6px 9px;
-          border-radius: 5px;
+        .markets-widget {
+          width: 100%;
+          height: 100%;
         }
 
-        .chart-footer .active {
-          color: var(--gold-light);
-          background: rgba(231, 185, 79, 0.1);
+        .markets-widget :global(.tradingview-widget-container__widget) {
+          width: 100%;
+          height: 100%;
+        }
+
+        .markets-widget :global(iframe) {
+          display: block;
+          width: 100% !important;
+          height: 100% !important;
+          border: 0 !important;
+        }
+
+        .markets-loading {
+          height: 100%;
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
+          color: var(--muted);
+          text-align: center;
+          direction: rtl;
+        }
+
+        .markets-loading strong {
+          color: #d8dee5;
+          font-size: 12px;
+        }
+
+        .markets-loading small {
+          font-size: 9px;
+        }
+
+        .loading-mark {
+          width: 45px;
+          height: 45px;
+          display: grid;
+          place-items: center;
+          margin-bottom: 5px;
+          color: #111;
+          border-radius: 12px;
+          background: linear-gradient(135deg, var(--gold-light), var(--gold));
+          font-size: 12px;
+          font-weight: 950;
+          direction: ltr;
+        }
+
+        .market-card-footer {
+          padding-top: 13px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          color: #687481;
+          font-size: 8px;
+          direction: rtl;
         }
 
         .stats-section {
           position: relative;
           z-index: 5;
           width: min(1180px, calc(100% - 40px));
-          margin: 0 auto 110px;
+          margin: 0 auto 120px;
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          overflow: hidden;
           border: 1px solid var(--border);
           border-radius: 16px;
+          overflow: hidden;
           background: rgba(255, 255, 255, 0.018);
         }
 
         .stat {
-          padding: 28px 20px;
+          min-height: 120px;
+          padding: 25px 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
           text-align: center;
           border-left: 1px solid var(--border);
         }
@@ -1111,29 +1216,25 @@ export default function HomePage() {
         }
 
         .stat strong {
-          display: block;
           color: var(--gold-light);
-          font-size: 28px;
-          direction: ltr;
+          font-size: 24px;
         }
 
         .stat span {
-          display: block;
-          margin-top: 8px;
           color: var(--muted);
-          font-size: 12px;
+          font-size: 10px;
         }
 
         .section {
           position: relative;
           z-index: 5;
           width: min(1180px, calc(100% - 40px));
-          margin: 0 auto;
+          margin: auto;
           padding-bottom: 120px;
         }
 
         .section-heading {
-          max-width: 670px;
+          max-width: 650px;
           margin: 0 auto 45px;
           text-align: center;
         }
@@ -1257,7 +1358,11 @@ export default function HomePage() {
           border: 1px solid var(--border);
           border-radius: 22px;
           background:
-            radial-gradient(circle at 10% 20%, rgba(231, 185, 79, 0.08), transparent 25%),
+            radial-gradient(
+              circle at 10% 20%,
+              rgba(231, 185, 79, 0.08),
+              transparent 25%
+            ),
             rgba(255, 255, 255, 0.018);
         }
 
@@ -1331,7 +1436,11 @@ export default function HomePage() {
           border: 1px solid rgba(231, 185, 79, 0.25);
           border-radius: 22px;
           background:
-            linear-gradient(120deg, rgba(231, 185, 79, 0.1), transparent 50%),
+            linear-gradient(
+              120deg,
+              rgba(231, 185, 79, 0.1),
+              transparent 50%
+            ),
             #0c1219;
         }
 
@@ -1339,6 +1448,18 @@ export default function HomePage() {
           position: relative;
           z-index: 3;
           max-width: 690px;
+        }
+
+        .cta-label {
+          width: fit-content;
+          padding: 7px 11px;
+          display: block;
+          color: var(--gold-light);
+          border: 1px solid rgba(231, 185, 79, 0.2);
+          border-radius: 100px;
+          background: rgba(231, 185, 79, 0.06);
+          font-size: 9px;
+          font-weight: 900;
         }
 
         .cta-section h2 {
@@ -1357,6 +1478,10 @@ export default function HomePage() {
           color: #d5dbe1;
           font-size: 13px;
           font-weight: 800;
+        }
+
+        .text-button:hover {
+          color: var(--gold-light);
         }
 
         .cta-chart {
@@ -1379,11 +1504,29 @@ export default function HomePage() {
           animation: ctaBars 3s ease-in-out infinite alternate;
         }
 
-        .cta-chart span:nth-child(1) { height: 20%; }
-        .cta-chart span:nth-child(2) { height: 38%; animation-delay: 0.3s; }
-        .cta-chart span:nth-child(3) { height: 31%; animation-delay: 0.6s; }
-        .cta-chart span:nth-child(4) { height: 61%; animation-delay: 0.9s; }
-        .cta-chart span:nth-child(5) { height: 85%; animation-delay: 1.2s; }
+        .cta-chart span:nth-child(1) {
+          height: 20%;
+        }
+
+        .cta-chart span:nth-child(2) {
+          height: 38%;
+          animation-delay: 0.3s;
+        }
+
+        .cta-chart span:nth-child(3) {
+          height: 31%;
+          animation-delay: 0.6s;
+        }
+
+        .cta-chart span:nth-child(4) {
+          height: 61%;
+          animation-delay: 0.9s;
+        }
+
+        .cta-chart span:nth-child(5) {
+          height: 85%;
+          animation-delay: 1.2s;
+        }
 
         .risk-warning {
           position: relative;
@@ -1460,56 +1603,49 @@ export default function HomePage() {
           font-size: 10px;
         }
 
-        @keyframes ticker {
-          from { transform: translateX(0); }
-          to { transform: translateX(50%); }
-        }
-
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(28px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(28px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         @keyframes cardFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-
-        @keyframes drawChart {
-          to { stroke-dashoffset: 0; }
-        }
-
-        @keyframes pulse {
-          70% { box-shadow: 0 0 0 8px rgba(255, 101, 119, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(255, 101, 119, 0); }
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
         }
 
         @keyframes pulseGreen {
-          50% { box-shadow: 0 0 0 7px rgba(37, 201, 151, 0); }
-        }
-
-        @keyframes bars {
-          50% { transform: scaleY(0.65); opacity: 0.7; }
+          0% {
+            box-shadow: 0 0 0 0 rgba(37, 201, 151, 0.38);
+          }
+          70% {
+            box-shadow: 0 0 0 8px rgba(37, 201, 151, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(37, 201, 151, 0);
+          }
         }
 
         @keyframes goldMove {
-          to { background-position: 200% center; }
-        }
-
-        @keyframes rotateStar {
-          to { transform: rotate(360deg); }
-        }
-
-        @keyframes candleMove {
-          to { transform: translateY(-5px); }
-        }
-
-        @keyframes priceGlow {
-          50% { box-shadow: 0 0 18px rgba(231, 185, 79, 0.4); }
+          to {
+            background-position: 200% center;
+          }
         }
 
         @keyframes ctaBars {
-          to { transform: scaleY(0.65); }
+          to {
+            transform: scaleY(0.65);
+          }
         }
 
         @media (max-width: 980px) {
@@ -1548,7 +1684,7 @@ export default function HomePage() {
           }
 
           .trading-card {
-            width: min(650px, 100%);
+            width: min(700px, 100%);
             margin: auto;
           }
 
@@ -1612,6 +1748,7 @@ export default function HomePage() {
 
           .ticker-label {
             min-width: 105px;
+            padding: 0 9px;
           }
 
           .ticker-note {
@@ -1642,11 +1779,33 @@ export default function HomePage() {
           }
 
           .trading-card {
-            padding: 17px;
+            padding: 15px;
+            animation: none;
           }
 
-          .chart-area {
-            height: 210px;
+          .market-card-header {
+            min-height: auto;
+          }
+
+          .market-card-header h2 {
+            font-size: 17px;
+          }
+
+          .market-card-header p {
+            max-width: 230px;
+          }
+
+          .market-status {
+            display: none;
+          }
+
+          .market-widget-frame {
+            height: 500px;
+          }
+
+          .market-card-footer {
+            align-items: flex-start;
+            flex-direction: column;
           }
 
           .stats-section {
@@ -1703,6 +1862,20 @@ export default function HomePage() {
 
           .risk-warning {
             align-items: flex-start;
+          }
+        }
+
+        @media (max-width: 390px) {
+          .brand-text {
+            display: none;
+          }
+
+          .hero h1 {
+            font-size: 34px;
+          }
+
+          .market-widget-frame {
+            height: 470px;
           }
         }
 
