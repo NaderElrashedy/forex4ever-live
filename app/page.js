@@ -91,6 +91,7 @@ export default function HomePage() {
               <span className="live-dot" />
               البث المباشر
             </Link>
+    <Link href="/markets">الأسواق</Link>
           </nav>
 
           <div className="account-actions">
