@@ -129,13 +129,15 @@ function HomeLiveTicker() {
   <section
     style={{
       width: "100%",
-      minHeight: "100px",
-      padding: "12px 0",
+      height: "100px",
+      padding: "0",
       boxSizing: "border-box",
-      direction: "ltr",
+      display: "flex",
+      alignItems: "center",
       background: "#080d13",
       borderTop: "1px solid rgba(231, 185, 79, 0.22)",
       borderBottom: "1px solid rgba(231, 185, 79, 0.22)",
+      direction: "ltr",
     }}
   >
     <div
@@ -143,7 +145,9 @@ function HomeLiveTicker() {
       className="tradingview-widget-container"
       style={{
         width: "100%",
-        minHeight: "74px",
+        minHeight: "46px",
+        display: "flex",
+        alignItems: "center",
       }}
     />
   </section>
