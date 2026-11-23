@@ -148,7 +148,6 @@ function HomeLiveTicker() {
     />
   </section>
 );
-  );
 }
 
 export default function HomePage() {
