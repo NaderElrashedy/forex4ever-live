@@ -126,26 +126,28 @@ function HomeLiveTicker() {
   }, []);
 
   return (
-    <section
+  <section
+    style={{
+      width: "100%",
+      minHeight: "100px",
+      padding: "12px 0",
+      boxSizing: "border-box",
+      direction: "ltr",
+      background: "#080d13",
+      borderTop: "1px solid rgba(231, 185, 79, 0.22)",
+      borderBottom: "1px solid rgba(231, 185, 79, 0.22)",
+    }}
+  >
+    <div
+      ref={containerRef}
+      className="tradingview-widget-container"
       style={{
         width: "100%",
         minHeight: "74px",
-        overflow: "hidden",
-        direction: "ltr",
-        background: "#080d13",
-        borderTop: "1px solid rgba(231, 185, 79, 0.22)",
-        borderBottom: "1px solid rgba(231, 185, 79, 0.22)",
       }}
-    >
-      <div
-        ref={containerRef}
-        className="tradingview-widget-container"
-        style={{
-          width: "100%",
-          minHeight: "74px",
-        }}
-      />
-    </section>
+    />
+  </section>
+);
   );
 }
 
