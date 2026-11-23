@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthButton from "./AuthButton";
 
 export default function Header() {
   return (
@@ -13,7 +14,7 @@ export default function Header() {
         <Link href="/live" style={styles.link}>البث المباشر</Link>
         <Link href="/markets" style={styles.link}>الأسواق</Link>
         <Link href="/news" style={styles.link}>الأخبار</Link>
-        <Link href="/login" style={styles.login}>تسجيل الدخول</Link>
+      <AuthButton />
         <Link href="/signup" style={styles.signup}>إنشاء حساب</Link>
       </nav>
     </header>
