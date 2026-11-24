@@ -230,7 +230,7 @@ export default function Header() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 3px;
+          gap: 18px;
         }
 
         .navLink {
