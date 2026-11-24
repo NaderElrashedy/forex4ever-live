@@ -63,6 +63,7 @@ function SocialIcon({ type }) {
           stroke="currentColor"
           strokeWidth="1.8"
         />
+
         <path
           d="M9 7.8c.3-.2.7-.1.9.3l.7 1.5c.1.3.1.6-.1.8l-.6.7c.6 1.2 1.6 2.2 2.8 2.8l.7-.7c.2-.2.6-.3.9-.1l1.5.7c.4.2.5.6.3.9-.4.9-1.3 1.5-2.3 1.4-3.3-.5-5.9-3.1-6.4-6.4-.1-.8.6-1.7 1.6-1.9Z"
           fill="currentColor"
@@ -93,6 +94,7 @@ function SocialIcon({ type }) {
           rx="4"
           fill="currentColor"
         />
+
         <path d="m10 9 6 3-6 3V9Z" fill="#ffffff" />
       </svg>
     );
@@ -122,6 +124,7 @@ function SocialIcon({ type }) {
           stroke="currentColor"
           strokeWidth="2"
         />
+
         <circle
           cx="12"
           cy="12"
@@ -130,6 +133,7 @@ function SocialIcon({ type }) {
           stroke="currentColor"
           strokeWidth="2"
         />
+
         <circle cx="17.5" cy="6.7" r="1.2" fill="currentColor" />
       </svg>
     );
@@ -170,6 +174,7 @@ function SocialIcon({ type }) {
           stroke="currentColor"
           strokeWidth="2"
         />
+
         <path
           d="m4 7 8 6 8-6"
           fill="none"
@@ -210,6 +215,7 @@ function TradingIcon({ isOpen }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+
       <path
         d="M15 6h4v4"
         fill="none"
@@ -218,6 +224,7 @@ function TradingIcon({ isOpen }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+
       <path
         d="M4 21h16"
         fill="none"
@@ -240,9 +247,9 @@ export default function FloatingSocialMenu() {
         aria-hidden={!isOpen}
       >
         <div className="menu-header">
-          <div>
+          <div className="menu-title">
             <strong>تواصل معنا</strong>
-            <span>تابع Forex4Ever</span>
+            <span>تابع Forex4Ever على منصات التواصل</span>
           </div>
 
           <button
@@ -268,33 +275,30 @@ export default function FloatingSocialMenu() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ "--social-color": social.color }}
+                  aria-label={social.name}
+                  title={social.name}
                 >
                   <span className="social-icon">
                     <SocialIcon type={social.id} />
                   </span>
-
-                  <span className="social-name">{social.name}</span>
-
-                  <span className="open-symbol">↗</span>
                 </a>
               );
             }
 
             return (
-              <div
+              <button
                 key={social.id}
+                type="button"
                 className="social-item social-item-disabled"
                 style={{ "--social-color": social.color }}
-                title="سيتم إضافة الرابط قريبًا"
+                aria-label={`${social.name} - سيتم إضافة الرابط قريبًا`}
+                title={`${social.name} - قريبًا`}
+                disabled
               >
                 <span className="social-icon">
                   <SocialIcon type={social.id} />
                 </span>
-
-                <span className="social-name">{social.name}</span>
-
-                <span className="coming-soon">قريبًا</span>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -393,7 +397,7 @@ export default function FloatingSocialMenu() {
           position: absolute;
           left: 0;
           bottom: calc(100% + 14px);
-          width: 290px;
+          width: 280px;
           padding: 14px;
           border: 1px solid rgba(217, 180, 91, 0.35);
           border-radius: 22px;
@@ -431,29 +435,30 @@ export default function FloatingSocialMenu() {
           justify-content: space-between;
           gap: 12px;
           padding: 2px 3px 13px;
-          margin-bottom: 8px;
+          margin-bottom: 12px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .menu-header div {
+        .menu-title {
           display: flex;
           flex-direction: column;
           gap: 3px;
         }
 
-        .menu-header strong {
+        .menu-title strong {
           color: #f4d47c;
           font-size: 17px;
         }
 
-        .menu-header span {
+        .menu-title span {
           color: #9f9f9f;
-          font-size: 12px;
+          font-size: 11px;
         }
 
         .close-button {
           display: grid;
           place-items: center;
+          flex: 0 0 auto;
           width: 32px;
           height: 32px;
           padding: 0;
@@ -464,77 +469,82 @@ export default function FloatingSocialMenu() {
           font-size: 22px;
           line-height: 1;
           cursor: pointer;
-        }
-
-        .social-list {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-        }
-
-        .social-item {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          min-height: 53px;
-          padding: 9px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 14px;
-          color: #ffffff;
-          background: rgba(255, 255, 255, 0.035);
-          text-decoration: none;
           transition:
-            transform 0.2s ease,
+            color 0.2s ease,
             border-color 0.2s ease,
             background 0.2s ease;
         }
 
-        a.social-item:hover {
-          transform: translateY(-2px);
+        .close-button:hover {
+          color: #f4d47c;
+          border-color: rgba(217, 180, 91, 0.55);
+          background: rgba(217, 180, 91, 0.1);
+        }
+
+        .social-list {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 10px;
+        }
+
+        .social-item {
+          display: grid;
+          place-items: center;
+          width: 100%;
+          aspect-ratio: 1;
+          margin: 0;
+          padding: 7px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          color: #ffffff;
+          background: rgba(255, 255, 255, 0.035);
+          text-decoration: none;
+          cursor: pointer;
+          transition:
+            transform 0.2s ease,
+            border-color 0.2s ease,
+            background 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+        .social-item:hover {
+          transform: translateY(-3px);
           border-color: var(--social-color);
           background: rgba(255, 255, 255, 0.075);
+          box-shadow: 0 7px 18px rgba(0, 0, 0, 0.3);
         }
 
         .social-item-disabled {
           cursor: default;
+          opacity: 0.9;
+        }
+
+        .social-item-disabled:disabled {
+          color: #ffffff;
+        }
+
+        .social-item-disabled:hover {
+          transform: none;
+          border-color: rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.035);
+          box-shadow: none;
         }
 
         .social-icon {
           display: grid;
           place-items: center;
-          flex: 0 0 auto;
-          width: 35px;
-          height: 35px;
-          border-radius: 11px;
+          width: 43px;
+          height: 43px;
+          border-radius: 13px;
           color: var(--social-color);
           background: rgba(255, 255, 255, 0.07);
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
         }
 
         .social-icon :global(svg) {
-          width: 21px;
-          height: 21px;
-        }
-
-        .social-name {
-          flex: 1;
-          overflow: hidden;
-          color: #ededed;
-          font-size: 12px;
-          font-weight: 700;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .coming-soon {
-          color: #8d8d8d;
-          font-size: 9px;
-          white-space: nowrap;
-        }
-
-        .open-symbol {
-          color: var(--social-color);
-          font-size: 13px;
+          display: block;
+          width: 25px;
+          height: 25px;
         }
 
         @media (max-width: 600px) {
@@ -554,27 +564,47 @@ export default function FloatingSocialMenu() {
             height: 36px;
           }
 
+          .trigger-icon :global(svg) {
+            width: 21px;
+            height: 21px;
+          }
+
           .trigger-label {
             font-size: 11px;
           }
 
           .social-menu {
-            width: min(288px, calc(100vw - 28px));
-            max-height: calc(100vh - 125px);
+            width: min(280px, calc(100vw - 28px));
+            max-height: calc(100vh - 115px);
             overflow-y: auto;
+          }
+
+          .social-icon {
+            width: 39px;
+            height: 39px;
+          }
+
+          .social-icon :global(svg) {
+            width: 23px;
+            height: 23px;
           }
         }
 
         @media (max-width: 350px) {
           .social-list {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(3, 1fr);
+          }
+
+          .social-menu {
+            width: min(250px, calc(100vw - 28px));
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .floating-trigger,
           .social-menu,
-          .social-item {
+          .social-item,
+          .close-button {
             transition: none;
           }
         }
