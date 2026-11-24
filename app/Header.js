@@ -15,6 +15,9 @@ export default function Header() {
         <Link href="/markets" style={styles.link}>الأسواق</Link>
         <Link href="/news" style={styles.link}>الأخبار</Link>
       <AuthButton />
+    <Link href="/risk-calculator" style={styles.signup}>
+  حاسبة المخاطر
+</Link>
         <Link href="/signup" style={styles.signup}>إنشاء حساب</Link>
       </nav>
     </header>
