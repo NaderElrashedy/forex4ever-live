@@ -13,6 +13,9 @@ export default function Header() {
         <Link href="/academy" style={styles.link}>الأكاديمية</Link>
         <Link href="/live" style={styles.link}>البث المباشر</Link>
         <Link href="/markets" style={styles.link}>الأسواق</Link>
+    <Link href="/egypt-prices">
+  أسعار مصر
+</Link>
         <Link href="/news" style={styles.link}>الأخبار</Link>
     <Link href="/brokers" className={styles.navLink}>
   دليل الشركات
