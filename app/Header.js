@@ -12,7 +12,7 @@ const navigationLinks = [
   { href: "/markets", label: "الأسواق" },
   { href: "/egypt-prices", label: "أسعار مصر" },
   { href: "/news", label: "الأخبار" },
-  { href: "/brokers", label: "دليل الشركات" },
+  { href: "/brokers", label: "فتح حساب تداول" },
   { href: "/risk-calculator", label: "حاسبة المخاطر" },
 ];
 
