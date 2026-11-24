@@ -17,7 +17,7 @@ export default function Header() {
         <Link href="/risk-calculator" style={styles.link}>
   حاسبة المخاطر
 </Link>
-      <AuthButton style={styles.signup} />
+      <AuthButton  />
 
         <Link href="/signup" style={styles.signup}>إنشاء حساب</Link>
       </nav>
