@@ -1,1078 +1,616 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
+import styles from "./tmgm.module.css";
 
-const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
+export const metadata = {
+  title: "شركة TMGM | دليل شركات Forex4Ever",
+  description:
+    "تعرف على شركة TMGM ومنصات التداول والحسابات والأدوات المتاحة والمعلومات التنظيمية قبل فتح حساب تداول.",
+};
 
-async function requestWikidata(params) {
-  const query = new URLSearchParams({
-    ...params,
-    format: "json",
-    origin: "*",
-  });
+const OPEN_ACCOUNT_URL = "";
 
-  const response = await fetch(`${WIKIDATA_API}?${query.toString()}`);
+const platforms = [
+  {
+    icon: "MT4",
+    title: "MetaTrader 4",
+    description:
+      "منصة تداول شهيرة توفر الرسوم البيانية والمؤشرات الفنية والمستشارين الآليين وأدوات تنفيذ الأوامر.",
+  },
+  {
+    icon: "MT5",
+    title: "MetaTrader 5",
+    description:
+      "منصة متعددة الأصول بإمكانات تحليلية متقدمة وأطر زمنية وأدوات إضافية مقارنة بالجيل السابق.",
+  },
+  {
+    icon: "WEB",
+    title: "التداول عبر الويب",
+    description:
+      "قد تتوفر إمكانية الوصول إلى الحساب والتداول عبر المتصفح حسب المنصة والكيان التابع له العميل.",
+  },
+  {
+    icon: "APP",
+    title: "تطبيقات الهاتف",
+    description:
+      "تدعم منصات MetaTrader التداول وإدارة الصفقات من أجهزة Android وiPhone.",
+  },
+];
 
-  if (!response.ok) {
-    throw new Error("تعذر الاتصال بمصدر البيانات.");
-  }
+const markets = [
+  {
+    icon: "💱",
+    title: "الفوركس",
+    description:
+      "تداول عقود الفروقات على أزواج العملات الرئيسية والثانوية، بحسب الكيان والمنطقة.",
+  },
+  {
+    icon: "🥇",
+    title: "المعادن",
+    description:
+      "أدوات مرتبطة بالذهب والفضة ومعادن أخرى وفق قائمة المنتجات المتاحة.",
+  },
+  {
+    icon: "📊",
+    title: "المؤشرات",
+    description:
+      "الوصول إلى عقود فروقات مرتبطة بعدد من مؤشرات الأسواق العالمية.",
+  },
+  {
+    icon: "🛢️",
+    title: "الطاقة",
+    description:
+      "أدوات مرتبطة بالنفط ومنتجات الطاقة، مع اختلاف ساعات التداول وشروط العقود.",
+  },
+  {
+    icon: "🏢",
+    title: "الأسهم",
+    description:
+      "قد تتوفر عقود فروقات على أسهم عالمية وفق الكيان والمنصة ونوع الحساب.",
+  },
+  {
+    icon: "₿",
+    title: "الأصول الرقمية",
+    description:
+      "قد تتوفر بعض عقود فروقات الأصول الرقمية في دول محددة، مع قيود تنظيمية محتملة.",
+  },
+];
 
-  return response.json();
-}
+const advantages = [
+  "توفير منصات MetaTrader المعروفة على نطاق واسع.",
+  "الوصول إلى أكثر من فئة من الأسواق والأدوات المالية.",
+  "توفر موقع رسمي باللغة العربية.",
+  "إمكانية استخدام حساب تجريبي وفق شروط الشركة.",
+  "أدوات تحليل ورسوم بيانية وتداول آلي عبر المنصات المدعومة.",
+  "إمكانية التداول من الكمبيوتر والهاتف.",
+];
 
-function getClaimValue(claims, property) {
-  return claims?.[property]?.[0]?.mainsnak?.datavalue?.value ?? null;
-}
+const considerations = [
+  "الخدمات والرافعة المالية والحماية التنظيمية تختلف حسب بلد الإقامة.",
+  "يجب التأكد من اسم الكيان القانوني الذي سيتم فتح الحساب من خلاله.",
+  "السبريد والعمولات قد تختلف حسب الحساب والأداة ووقت التداول.",
+  "عقود الفروقات منتجات عالية المخاطر وقد تؤدي إلى خسارة رأس المال.",
+  "بعض الأدوات أو طرق الدفع قد لا تكون متاحة في جميع الدول.",
+  "يجب مراجعة رسوم السحب والتحويل وعدم النشاط من المستندات الرسمية.",
+];
 
-function getEntityId(claims, property) {
-  const value = getClaimValue(claims, property);
-  return value?.id || null;
-}
+const accountTypes = [
+  {
+    title: "حساب تجريبي",
+    badge: "للتدريب",
+    description:
+      "يساعد على تجربة المنصة والتعرف على طريقة تنفيذ الأوامر باستخدام رصيد افتراضي، دون تعريض أموال حقيقية للمخاطر.",
+  },
+  {
+    title: "حساب Classic",
+    badge: "حسب التوفر",
+    description:
+      "حساب قد يعتمد بصورة أساسية على فروق الأسعار. يجب مراجعة شروط السبريد والتنفيذ الخاصة بالكيان الذي تتعامل معه.",
+  },
+  {
+    title: "حساب Edge",
+    badge: "حسب التوفر",
+    description:
+      "حساب قد يقدم فروق أسعار أقل مقابل عمولة تداول منفصلة. قيمة العمولة والشروط يجب تأكيدها من الشركة.",
+  },
+  {
+    title: "حساب إسلامي",
+    badge: "وفق الشروط",
+    description:
+      "قد يتوفر خيار متوافق مع أحكام التداول دون فوائد تبييت تقليدية، لكن قد تطبق رسوم وشروط بديلة.",
+  },
+];
 
-function getYear(timeValue) {
-  if (!timeValue?.time) return null;
+const quickFacts = [
+  ["اسم الشركة التجاري", "TMGM"],
+  ["نوع الخدمات", "وساطة وتداول عقود الفروقات"],
+  ["الحساب التجريبي", "قد يكون متاحًا"],
+  ["منصات التداول", "MetaTrader 4 وMetaTrader 5"],
+  ["لغة الموقع", "تتضمن اللغة العربية"],
+  ["الرافعة المالية", "تختلف حسب الكيان وبلد العميل"],
+  ["الحد الأدنى للإيداع", "يجب تأكيده من صفحة التسجيل الرسمية"],
+  ["فتح الحساب", "غير متاح من Forex4Ever حاليًا"],
+];
 
-  const match = timeValue.time.match(/[+-](\d{4,})-/);
-  return match ? match[1] : null;
-}
-
-function getPreferredText(values) {
-  return values?.ar?.value || values?.en?.value || null;
-}
-
-function getCommonsImageUrl(fileName) {
-  if (!fileName) return null;
-
-  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(
-    fileName
-  )}?width=320`;
-}
-
-function isValidWebsite(url) {
-  if (!url) return false;
-
-  try {
-    const parsedUrl = new URL(url);
-    return parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
-
-export default function BrokersPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [results, setResults] = useState([]);
-  const [selectedBroker, setSelectedBroker] = useState(null);
-
-  const [isSearching, setIsSearching] = useState(false);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-
-  const [searchError, setSearchError] = useState("");
-  const [detailsError, setDetailsError] = useState("");
-
-  async function searchEntities(term, language) {
-    const data = await requestWikidata({
-      action: "wbsearchentities",
-      search: term,
-      language,
-      uselang: language,
-      type: "item",
-      limit: "12",
-    });
-
-    return data.search || [];
-  }
-
-  async function handleSearch(event) {
-    event.preventDefault();
-
-    const cleanTerm = searchTerm.trim();
-
-    if (cleanTerm.length < 2) {
-      setSearchError("اكتب حرفين على الأقل للبحث عن الشركة.");
-      return;
-    }
-
-    setIsSearching(true);
-    setSearchError("");
-    setDetailsError("");
-    setSelectedBroker(null);
-    setResults([]);
-
-    try {
-      let searchResults = await searchEntities(cleanTerm, "ar");
-
-      /*
-        إذا لم نجد نتائج كافية بالعربية،
-        نبحث بالإنجليزية ونمنع تكرار الشركات.
-      */
-      if (searchResults.length < 5) {
-        const englishResults = await searchEntities(cleanTerm, "en");
-
-        const combinedResults = [...searchResults, ...englishResults];
-
-        searchResults = combinedResults.filter(
-          (item, index, array) =>
-            array.findIndex((result) => result.id === item.id) === index
-        );
-      }
-
-      setResults(searchResults.slice(0, 12));
-
-      if (searchResults.length === 0) {
-        setSearchError(
-          "لم نجد نتائج مطابقة. جرّب كتابة الاسم الرسمي للشركة باللغة الإنجليزية."
-        );
-      }
-    } catch (error) {
-      console.error(error);
-      setSearchError(
-        "تعذر البحث الآن. يرجى المحاولة مرة أخرى بعد قليل."
-      );
-    } finally {
-      setIsSearching(false);
-    }
-  }
-
-  async function getRelatedLabels(entityIds) {
-    const validIds = entityIds.filter(Boolean);
-
-    if (validIds.length === 0) {
-      return {};
-    }
-
-    const data = await requestWikidata({
-      action: "wbgetentities",
-      ids: validIds.join("|"),
-      props: "labels",
-      languages: "ar|en",
-    });
-
-    const labels = {};
-
-    Object.entries(data.entities || {}).forEach(([id, entity]) => {
-      labels[id] =
-        entity.labels?.ar?.value ||
-        entity.labels?.en?.value ||
-        id;
-    });
-
-    return labels;
-  }
-
-  async function handleSelectBroker(result) {
-    setIsLoadingDetails(true);
-    setDetailsError("");
-    setSelectedBroker(null);
-
-    try {
-      const data = await requestWikidata({
-        action: "wbgetentities",
-        ids: result.id,
-        props: "labels|descriptions|claims",
-        languages: "ar|en",
-      });
-
-      const entity = data.entities?.[result.id];
-
-      if (!entity || entity.missing !== undefined) {
-        throw new Error("لم يتم العثور على تفاصيل الشركة.");
-      }
-
-      const claims = entity.claims || {};
-
-      /*
-        خصائص Wikidata المستخدمة:
-
-        P17  = الدولة
-        P571 = تاريخ التأسيس
-        P856 = الموقع الرسمي
-        P154 = الشعار
-        P749 = الشركة الأم
-      */
-      const countryId = getEntityId(claims, "P17");
-      const parentCompanyId = getEntityId(claims, "P749");
-
-      const relatedLabels = await getRelatedLabels([
-        countryId,
-        parentCompanyId,
-      ]);
-
-      const websiteValue = getClaimValue(claims, "P856");
-      const logoFileName = getClaimValue(claims, "P154");
-      const inceptionValue = getClaimValue(claims, "P571");
-
-      setSelectedBroker({
-        id: result.id,
-        name:
-          getPreferredText(entity.labels) ||
-          result.label ||
-          result.id,
-        description:
-          getPreferredText(entity.descriptions) ||
-          result.description ||
-          "لا يوجد وصف متوفر لهذه الشركة.",
-        country: countryId
-          ? relatedLabels[countryId] || countryId
-          : null,
-        parentCompany: parentCompanyId
-          ? relatedLabels[parentCompanyId] || parentCompanyId
-          : null,
-        foundationYear: getYear(inceptionValue),
-        website: isValidWebsite(websiteValue)
-          ? websiteValue
-          : null,
-        logo: getCommonsImageUrl(logoFileName),
-        sourceUrl: `https://www.wikidata.org/wiki/${result.id}`,
-        fetchedAt: new Intl.DateTimeFormat("ar-EG", {
-          dateStyle: "long",
-          timeStyle: "short",
-        }).format(new Date()),
-      });
-
-      window.setTimeout(() => {
-        document
-          .getElementById("broker-details")
-          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    } catch (error) {
-      console.error(error);
-      setDetailsError(
-        "تعذر جلب تفاصيل هذه الشركة. حاول اختيار نتيجة أخرى."
-      );
-    } finally {
-      setIsLoadingDetails(false);
-    }
-  }
-
-  function resetSearch() {
-    setSearchTerm("");
-    setResults([]);
-    setSelectedBroker(null);
-    setSearchError("");
-    setDetailsError("");
+function AccountButton({ className = "" }) {
+  if (OPEN_ACCOUNT_URL) {
+    return (
+      <a
+        href={OPEN_ACCOUNT_URL}
+        target="_blank"
+        rel="nofollow sponsored noopener noreferrer"
+        className={`${styles.primaryButton} ${className}`}
+      >
+        فتح حساب لدى TMGM
+        <span aria-hidden="true">←</span>
+      </a>
+    );
   }
 
   return (
-    <main className="page" dir="rtl">
-      <div className="container">
-        {/* رأس الصفحة */}
-        <header className="pageHeader">
-          <Link href="/" className="backLink">
-            العودة إلى الرئيسية
-          </Link>
+    <span
+      className={`${styles.primaryButton} ${styles.disabledButton} ${className}`}
+      aria-disabled="true"
+      title="سيتم تفعيل رابط فتح الحساب لاحقًا"
+    >
+      فتح حساب — الرابط قريبًا
+    </span>
+  );
+}
 
-          <div className="titleArea">
-            <span className="badge">Forex4Ever</span>
+export default function TmgmPage() {
+  return (
+    <main className={styles.page} dir="rtl">
+      <div className={styles.backgroundGlowOne} />
+      <div className={styles.backgroundGlowTwo} />
 
-            <h1>دليل شركات التداول</h1>
+      <div className={styles.container}>
+        <nav className={styles.breadcrumb} aria-label="مسار التنقل">
+          <Link href="/">الرئيسية</Link>
+          <span>/</span>
+          <Link href="/brokers">دليل الشركات</Link>
+          <span>/</span>
+          <span>TMGM</span>
+        </nav>
 
-            <p>
-              ابحث عن المعلومات الأساسية المتاحة عن شركات التداول
-              والمؤسسات المالية من خلال Wikidata.
+        <section className={styles.hero}>
+          <div className={styles.heroContent}>
+            <div className={styles.companyHeading}>
+              <div className={styles.companyLogo} aria-label="TMGM">
+                <span>TMGM</span>
+              </div>
+
+              <div>
+                <span className={styles.eyebrow}>دليل شركات التداول</span>
+                <h1>شركة TMGM</h1>
+
+                <div className={styles.tags}>
+                  <span>وسيط عقود فروقات</span>
+                  <span>منصات MetaTrader</span>
+                  <span>حساب تجريبي</span>
+                </div>
+              </div>
+            </div>
+
+            <p className={styles.heroDescription}>
+              ملف تعريفي عن شركة TMGM يوضح منصات التداول وأنواع الحسابات
+              والأسواق المتاحة والنقاط المهمة التي ينبغي مراجعتها قبل اتخاذ
+              قرار فتح حساب.
             </p>
-          </div>
-        </header>
 
-        {/* تنبيه مهم */}
-        <section className="notice">
-          <span className="noticeIcon">⚠️</span>
-
-          <div>
-            <strong>تنبيه مهم</strong>
-
-            <p>
-              ظهور الشركة في هذا الدليل لا يعني أنها مرخصة أو موصى بها.
-              بيانات Wikidata قد تكون ناقصة أو قديمة، ويجب التحقق من
-              الترخيص من الموقع الرسمي للجهة الرقابية قبل التعامل مع
-              أي شركة.
-            </p>
-          </div>
-        </section>
-
-        {/* البحث */}
-        <section className="searchSection">
-          <div className="sectionHeading">
-            <span>🔎</span>
-
-            <div>
-              <h2>البحث عن شركة</h2>
-              <p>
-                يمكنك كتابة الاسم بالعربية أو الإنجليزية، مثل Exness أو
-                eToro.
-              </p>
-            </div>
-          </div>
-
-          <form className="searchForm" onSubmit={handleSearch}>
-            <input
-              type="search"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="اكتب اسم شركة التداول..."
-              aria-label="اسم شركة التداول"
-              autoComplete="off"
-            />
-
-            <button
-              type="submit"
-              className="searchButton"
-              disabled={isSearching}
-            >
-              {isSearching ? "جاري البحث..." : "بحث"}
-            </button>
-
-            {(results.length > 0 || selectedBroker) && (
-              <button
-                type="button"
-                className="resetButton"
-                onClick={resetSearch}
-              >
-                مسح
-              </button>
-            )}
-          </form>
-
-          {searchError && (
-            <div className="errorMessage">{searchError}</div>
-          )}
-        </section>
-
-        {/* حالة التحميل */}
-        {isSearching && (
-          <section className="loadingBox">
-            <div className="loader" />
-            <p>جاري البحث في قاعدة بيانات Wikidata...</p>
-          </section>
-        )}
-
-        {/* نتائج البحث */}
-        {!isSearching && results.length > 0 && (
-          <section className="resultsSection">
-            <div className="resultsTitle">
-              <h2>نتائج البحث</h2>
-              <span>{results.length} نتيجة</span>
-            </div>
-
-            <div className="resultsGrid">
-              {results.map((result) => (
-                <article className="resultCard" key={result.id}>
-                  <div className="resultTop">
-                    <span className="companyIcon">🏢</span>
-
-                    <span className="entityId">{result.id}</span>
-                  </div>
-
-                  <h3>{result.label || "اسم غير متوفر"}</h3>
-
-                  <p>
-                    {result.description ||
-                      "لا يوجد وصف متوفر لهذه النتيجة."}
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSelectBroker(result)}
-                    disabled={isLoadingDetails}
-                  >
-                    {isLoadingDetails
-                      ? "جاري التحميل..."
-                      : "عرض معلومات الشركة"}
-                  </button>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {detailsError && (
-          <div className="errorMessage detailsError">
-            {detailsError}
-          </div>
-        )}
-
-        {/* تفاصيل الشركة */}
-        {selectedBroker && (
-          <section
-            className="detailsSection"
-            id="broker-details"
-          >
-            <div className="detailsHeader">
-              <div className="logoBox">
-                {selectedBroker.logo ? (
-                  <img
-                    src={selectedBroker.logo}
-                    alt={`شعار ${selectedBroker.name}`}
-                  />
-                ) : (
-                  <span>🏢</span>
-                )}
-              </div>
-
-              <div className="companyHeading">
-                <span className="detailsBadge">
-                  معلومات من Wikidata
-                </span>
-
-                <h2>{selectedBroker.name}</h2>
-                <p>{selectedBroker.description}</p>
-              </div>
-            </div>
-
-            <div className="infoGrid">
-              <div className="infoCard">
-                <span>🌍</span>
-                <div>
-                  <small>الدولة</small>
-                  <strong>
-                    {selectedBroker.country || "غير متوفر"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="infoCard">
-                <span>📅</span>
-                <div>
-                  <small>سنة التأسيس</small>
-                  <strong>
-                    {selectedBroker.foundationYear || "غير متوفر"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="infoCard">
-                <span>🏛️</span>
-                <div>
-                  <small>الشركة الأم</small>
-                  <strong>
-                    {selectedBroker.parentCompany || "غير متوفر"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="infoCard">
-                <span>🔗</span>
-                <div>
-                  <small>معرّف Wikidata</small>
-                  <strong>{selectedBroker.id}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="actionLinks">
-              {selectedBroker.website && (
-                <a
-                  href={selectedBroker.website}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  className="primaryLink"
-                >
-                  زيارة الموقع المسجل للشركة
-                </a>
-              )}
+            <div className={styles.heroActions}>
+              <AccountButton />
 
               <a
-                href={selectedBroker.sourceUrl}
+                href="https://www.tmgm.com/ar"
                 target="_blank"
-                rel="noopener noreferrer"
-                className="secondaryLink"
+                rel="nofollow noopener noreferrer"
+                className={styles.secondaryButton}
               >
-                عرض مصدر البيانات
+                زيارة الموقع الرسمي
+                <span aria-hidden="true">↗</span>
               </a>
             </div>
 
-            {!selectedBroker.website && (
-              <p className="missingWebsite">
-                الموقع الرسمي غير متوفر ضمن بيانات Wikidata لهذه
-                النتيجة.
-              </p>
-            )}
+            <p className={styles.linkNotice}>
+              زر فتح الحساب غير مفعّل حاليًا لعدم إضافة رابط فتح الحساب.
+            </p>
+          </div>
 
-            <div className="verificationWarning">
-              <strong>حالة التحقق من الترخيص: غير متحقق منه</strong>
+          <aside className={styles.summaryCard}>
+            <div className={styles.summaryHeader}>
+              <div>
+                <span>نظرة سريعة</span>
+                <h2>معلومات TMGM</h2>
+              </div>
+              <span className={styles.infoBadge}>ملف تعريفي</span>
+            </div>
 
+            <div className={styles.summaryRows}>
+              {quickFacts.slice(0, 6).map(([label, value]) => (
+                <div className={styles.summaryRow} key={label}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))}
+            </div>
+
+            <div className={styles.summaryWarning}>
+              <span aria-hidden="true">!</span>
               <p>
-                لا يوفر هذا البحث تحققًا مباشرًا من التراخيص. يجب
-                مراجعة سجل الجهة الرقابية الرسمي والتأكد من تطابق
-                الاسم القانوني ورقم الترخيص ونطاق الموقع.
+                لا يوجد تقييم رقمي للشركة في هذه الصفحة، ولا نضمن الأرباح أو
+                سلامة أي استثمار.
+              </p>
+            </div>
+          </aside>
+        </section>
+
+        <section className={styles.notice}>
+          <div className={styles.noticeIcon}>⚠</div>
+          <div>
+            <h2>معلومة مهمة قبل التسجيل</h2>
+            <p>
+              قد تعمل العلامة التجارية من خلال كيانات قانونية متعددة. الجهة
+              الرقابية والحماية المتاحة والرافعة المالية وشروط الحساب تعتمد
+              على بلدك والكيان الذي يحوَّل إليه طلب التسجيل.
+            </p>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <span className={styles.sectionLabel}>عن الشركة</span>
+            <h2>نبذة عن TMGM</h2>
+            <p>
+              TMGM علامة تقدم خدمات الوصول إلى الأسواق وتداول عقود الفروقات
+              من خلال منصات إلكترونية. توفر الشركة أدوات مالية متعددة، لكن
+              توافر كل أداة وشروطها يختلف حسب الكيان القانوني والمنطقة.
+            </p>
+          </div>
+
+          <div className={styles.aboutGrid}>
+            <article className={styles.textCard}>
+              <h3>ماذا تقدم الشركة؟</h3>
+              <p>
+                تركز خدمات الشركة على تداول المنتجات ذات الرافعة المالية، مثل
+                عقود الفروقات على العملات والمعادن والمؤشرات والطاقة وغيرها
+                من الأدوات المتاحة.
+              </p>
+              <p>
+                هذه المنتجات لا تعني عادةً امتلاك الأصل الأساسي، كما أن
+                الرافعة المالية قد تضخم الأرباح والخسائر معًا.
+              </p>
+            </article>
+
+            <article className={styles.textCard}>
+              <h3>لمن قد تكون مناسبة؟</h3>
+              <p>
+                قد تكون مناسبة للمتداول الذي يفهم طبيعة عقود الفروقات، ويعرف
+                كيفية استخدام أوامر وقف الخسارة وإدارة حجم الصفقة والمخاطر.
+              </p>
+              <p>
+                لا ينبغي الاعتماد على الحساب التجريبي وحده لتقدير نتائج
+                التداول الحقيقي، لأن التنفيذ والانزلاق والحالة النفسية تختلف.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <span className={styles.sectionLabel}>معلومات الحساب</span>
+            <h2>ملخص بيانات الشركة</h2>
+            <p>
+              بعض القيم تتغير حسب الدولة والكيان، لذلك تجنبنا وضع أرقام ثابتة
+              قد تصبح قديمة أو لا تنطبق على حسابك.
+            </p>
+          </div>
+
+          <div className={styles.factsTable}>
+            {quickFacts.map(([label, value]) => (
+              <div className={styles.factRow} key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <span className={styles.sectionLabel}>منصات التداول</span>
+            <h2>المنصات وطرق الوصول</h2>
+            <p>
+              تحقق من المنصة المتاحة لنوع حسابك قبل الإيداع، فقد تختلف المنتجات
+              بين منصة وأخرى.
+            </p>
+          </div>
+
+          <div className={styles.platformGrid}>
+            {platforms.map((platform) => (
+              <article className={styles.platformCard} key={platform.title}>
+                <div className={styles.platformIcon}>{platform.icon}</div>
+                <h3>{platform.title}</h3>
+                <p>{platform.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <span className={styles.sectionLabel}>أنواع الحسابات</span>
+            <h2>الحسابات المحتمل توفرها</h2>
+            <p>
+              أسماء الحسابات وشروطها يمكن أن تتغير. راجع عقد العميل وجدول
+              الرسوم قبل التسجيل أو الإيداع.
+            </p>
+          </div>
+
+          <div className={styles.accountsGrid}>
+            {accountTypes.map((account) => (
+              <article className={styles.accountCard} key={account.title}>
+                <div className={styles.accountTitle}>
+                  <h3>{account.title}</h3>
+                  <span>{account.badge}</span>
+                </div>
+                <p>{account.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <span className={styles.sectionLabel}>الأسواق</span>
+            <h2>الأدوات المالية المتاحة</h2>
+            <p>
+              لا تتوفر كل الأدوات في جميع الدول، وقد تختلف ساعات التداول
+              ومتطلبات الهامش من أداة إلى أخرى.
+            </p>
+          </div>
+
+          <div className={styles.marketsGrid}>
+            {markets.map((market) => (
+              <article className={styles.marketCard} key={market.title}>
+                <div className={styles.marketIcon}>{market.icon}</div>
+                <div>
+                  <h3>{market.title}</h3>
+                  <p>{market.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <span className={styles.sectionLabel}>التنظيم والحماية</span>
+            <h2>مراجعة الترخيص والكيان القانوني</h2>
+            <p>
+              تعرض TMGM خدماتها من خلال كيانات قد تخضع لجهات رقابية مختلفة.
+              يجب التحقق من الكيان الذي سيحمل حسابك قبل إرسال المستندات أو
+              الأموال.
+            </p>
+          </div>
+
+          <div className={styles.regulationGrid}>
+            <article className={styles.regulationCard}>
+              <span className={styles.regulationNumber}>01</span>
+              <h3>حدد اسم الكيان</h3>
+              <p>
+                اقرأ اسم الشركة القانوني الظاهر في نموذج التسجيل واتفاقية
+                العميل، وليس الاسم التجاري فقط.
+              </p>
+            </article>
+
+            <article className={styles.regulationCard}>
+              <span className={styles.regulationNumber}>02</span>
+              <h3>تحقق من الترخيص</h3>
+              <p>
+                ابحث عن اسم الكيان ورقم الترخيص مباشرةً في سجل الجهة الرقابية
+                الرسمية ولا تعتمد على صورة الترخيص وحدها.
+              </p>
+            </article>
+
+            <article className={styles.regulationCard}>
+              <span className={styles.regulationNumber}>03</span>
+              <h3>افهم الحماية المتاحة</h3>
+              <p>
+                فصل أموال العملاء أو حماية الرصيد السالب أو برامج التعويض ليست
+                متماثلة لدى كل الجهات والكيانات.
+              </p>
+            </article>
+          </div>
+
+          <div className={styles.verificationBox}>
+            <div>
+              <strong>لماذا لم نضع حكمًا نهائيًا على الترخيص؟</strong>
+              <p>
+                لأن الكيان الذي يستقبل العميل يمكن أن يختلف حسب الدولة. يجب
+                مطابقة بيانات حسابك مع السجل الرقابي والمستندات الرسمية وقت
+                التسجيل.
               </p>
             </div>
 
-            <div className="fetchDate">
-              آخر جلب للبيانات: {selectedBroker.fetchedAt}
-            </div>
-          </section>
-        )}
-
-        {/* التقييمات */}
-        {selectedBroker && (
-          <section className="reviewsSection">
-            <div className="sectionHeading">
-              <span>⭐</span>
-
-              <div>
-                <h2>تقييمات مستخدمي Forex4Ever</h2>
-                <p>
-                  سيتم تفعيل التقييمات بعد ربطها بقاعدة بيانات Supabase
-                  ونظام تسجيل الدخول ومراجعة الإدارة.
-                </p>
-              </div>
-            </div>
-
-            <div className="comingSoon">
-              <span>🔒</span>
-
-              <div>
-                <strong>التقييمات غير مفعّلة حاليًا</strong>
-
-                <p>
-                  لن نعرض تقييمات وهمية أو محفوظة على جهاز واحد فقط.
-                  سيتم تفعيلها لاحقًا بصورة صحيحة بحيث يكون لكل مستخدم
-                  تقييم واحد، ولا يظهر إلا بعد موافقة الإدارة.
-                </p>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* مصادر البيانات */}
-        <section className="sourceSection">
-          <h2>عن مصدر البيانات</h2>
-
-          <ul>
-            <li>
-              المعلومات الأساسية يتم جلبها من Wikidata عند إجراء البحث.
-            </li>
-
-            <li>
-              قد لا تظهر بعض الشركات أو قد تكون بياناتها غير مكتملة.
-            </li>
-
-            <li>
-              لا تمثل البيانات توصية بالتعامل مع أي شركة.
-            </li>
-
-            <li>
-              يجب التحقق من التراخيص من السجلات الرسمية للجهات
-              الرقابية.
-            </li>
-
-            <li>
-              استخدام الخدمة يخضع لسياسات وشروط استخدام Wikimedia
-              وWikidata.
-            </li>
-          </ul>
+            <a
+              href="https://www.tmgm.com/ar"
+              target="_blank"
+              rel="nofollow noopener noreferrer"
+            >
+              مراجعة الموقع الرسمي
+              <span aria-hidden="true">↗</span>
+            </a>
+          </div>
         </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <span className={styles.sectionLabel}>التكاليف</span>
+            <h2>السبريد والعمولات والإيداع</h2>
+          </div>
+
+          <div className={styles.costGrid}>
+            <article className={styles.costCard}>
+              <span>01</span>
+              <h3>فروق الأسعار</h3>
+              <p>
+                السبريد متغير وقد يتسع أثناء الأخبار أو ضعف السيولة أو افتتاح
+                وإغلاق الأسواق.
+              </p>
+            </article>
+
+            <article className={styles.costCard}>
+              <span>02</span>
+              <h3>عمولة التداول</h3>
+              <p>
+                قد تطبق عمولة منفصلة في بعض الحسابات ذات فروق الأسعار الأقل.
+                راجع قيمة العمولة لكل عقد.
+              </p>
+            </article>
+
+            <article className={styles.costCard}>
+              <span>03</span>
+              <h3>رسوم التبييت</h3>
+              <p>
+                قد تطبق تكاليف على الصفقات المفتوحة بعد نهاية يوم التداول،
+                وتختلف حسب الأداة واتجاه الصفقة.
+              </p>
+            </article>
+
+            <article className={styles.costCard}>
+              <span>04</span>
+              <h3>الإيداع والسحب</h3>
+              <p>
+                طرق الدفع والمدة والرسوم والعملات المدعومة تعتمد على الدولة
+                ومزود الدفع والبنك المستخدم.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.twoColumns}>
+            <article className={`${styles.listCard} ${styles.advantagesCard}`}>
+              <div className={styles.listHeading}>
+                <span className={styles.goodIcon}>✓</span>
+                <div>
+                  <span>نقاط إيجابية</span>
+                  <h2>المميزات العامة</h2>
+                </div>
+              </div>
+
+              <ul>
+                {advantages.map((item) => (
+                  <li key={item}>
+                    <span>✓</span>
+                    <p>{item}</p>
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className={`${styles.listCard} ${styles.warningCard}`}>
+              <div className={styles.listHeading}>
+                <span className={styles.warningIcon}>!</span>
+                <div>
+                  <span>قبل اتخاذ القرار</span>
+                  <h2>نقاط يجب الانتباه لها</h2>
+                </div>
+              </div>
+
+              <ul>
+                {considerations.map((item) => (
+                  <li key={item}>
+                    <span>!</span>
+                    <p>{item}</p>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section className={styles.checklist}>
+          <div className={styles.checklistContent}>
+            <span className={styles.sectionLabel}>قبل فتح الحساب</span>
+            <h2>قائمة تحقق سريعة</h2>
+
+            <div className={styles.checkItems}>
+              <div>
+                <span>1</span>
+                <p>تحقق من اسم الكيان ورقم الترخيص في السجل الرسمي.</p>
+              </div>
+              <div>
+                <span>2</span>
+                <p>اقرأ اتفاقية العميل وسياسة التنفيذ والسحب.</p>
+              </div>
+              <div>
+                <span>3</span>
+                <p>تأكد من السبريد والعمولة ورسوم التبييت.</p>
+              </div>
+              <div>
+                <span>4</span>
+                <p>ابدأ بحساب تجريبي ثم بمبلغ يمكنك تحمل خسارته.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.checklistAction}>
+            <p>رابط فتح الحساب لم تتم إضافته بعد.</p>
+            <AccountButton />
+            <a
+              href="https://www.tmgm.com/ar"
+              target="_blank"
+              rel="nofollow noopener noreferrer"
+              className={styles.textLink}
+            >
+              زيارة موقع TMGM الرسمي
+              <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </section>
+
+        <section className={styles.disclosure}>
+          <h2>الإفصاح وتنبيه المخاطر</h2>
+
+          <p>
+            هذه الصفحة تعريفية وليست توصية بالاستثمار أو نصيحة مالية، ولا تمثل
+            مراجعة قانونية شاملة للشركة. يجب التأكد من المعلومات والشروط
+            مباشرة من TMGM والجهة الرقابية المختصة قبل فتح الحساب.
+          </p>
+
+          <p>
+            تداول الفوركس وعقود الفروقات باستخدام الرافعة المالية ينطوي على
+            مخاطر مرتفعة، وقد تخسر جزءًا كبيرًا من رأس المال أو كامل رأس المال
+            المخصص للتداول. النتائج السابقة والحسابات التجريبية لا تضمن نتائج
+            مستقبلية.
+          </p>
+
+          <p>
+            لا يوجد حاليًا رابط إحالة مضاف إلى زر فتح الحساب. إذا أضيف رابط
+            إحالة مستقبلًا، يجب توضيح أن Forex4Ever قد يحصل على عمولة دون تكلفة
+            إضافية مباشرة على المستخدم، إن كان ذلك ينطبق.
+          </p>
+        </section>
+
+        <footer className={styles.pageFooter}>
+          <div>
+            <strong>Forex4Ever</strong>
+            <p>دليل تعريفي يساعدك على البحث والمقارنة قبل اتخاذ القرار.</p>
+          </div>
+
+          <div className={styles.footerLinks}>
+            <Link href="/brokers">جميع الشركات</Link>
+            <a
+              href="https://www.tmgm.com/ar"
+              target="_blank"
+              rel="nofollow noopener noreferrer"
+            >
+              الموقع الرسمي
+            </a>
+          </div>
+        </footer>
       </div>
-
-      <style jsx>{`
-        * {
-          box-sizing: border-box;
-        }
-
-        .page {
-          min-height: 100vh;
-          background:
-            radial-gradient(
-              circle at top right,
-              rgba(212, 175, 55, 0.1),
-              transparent 30%
-            ),
-            #07090d;
-          color: #f5f5f5;
-          padding: 32px 16px 70px;
-          font-family: Arial, sans-serif;
-        }
-
-        .container {
-          width: min(1150px, 100%);
-          margin: 0 auto;
-        }
-
-        .pageHeader {
-          margin-bottom: 24px;
-        }
-
-        .backLink {
-          display: inline-flex;
-          color: #d4af37;
-          text-decoration: none;
-          border: 1px solid rgba(212, 175, 55, 0.35);
-          border-radius: 10px;
-          padding: 10px 16px;
-          margin-bottom: 28px;
-          transition: 0.2s ease;
-        }
-
-        .backLink:hover {
-          background: rgba(212, 175, 55, 0.1);
-        }
-
-        .titleArea {
-          text-align: center;
-          max-width: 760px;
-          margin: 0 auto;
-        }
-
-        .badge,
-        .detailsBadge {
-          display: inline-flex;
-          color: #d4af37;
-          background: rgba(212, 175, 55, 0.1);
-          border: 1px solid rgba(212, 175, 55, 0.25);
-          border-radius: 999px;
-          padding: 7px 14px;
-          font-size: 14px;
-        }
-
-        h1 {
-          font-size: clamp(32px, 5vw, 52px);
-          margin: 18px 0 14px;
-          color: #ffffff;
-        }
-
-        .titleArea p {
-          color: #b9bec8;
-          font-size: 17px;
-          line-height: 1.9;
-          margin: 0;
-        }
-
-        .notice {
-          display: flex;
-          gap: 14px;
-          align-items: flex-start;
-          background: rgba(255, 193, 7, 0.08);
-          border: 1px solid rgba(255, 193, 7, 0.27);
-          border-radius: 16px;
-          padding: 18px;
-          margin: 30px 0 22px;
-        }
-
-        .noticeIcon {
-          font-size: 24px;
-        }
-
-        .notice strong {
-          color: #f1c84b;
-        }
-
-        .notice p {
-          color: #d5d5d5;
-          line-height: 1.8;
-          margin: 7px 0 0;
-        }
-
-        .searchSection,
-        .resultsSection,
-        .detailsSection,
-        .reviewsSection,
-        .sourceSection {
-          background: #10131a;
-          border: 1px solid #252a34;
-          border-radius: 20px;
-          padding: 24px;
-          margin-top: 22px;
-        }
-
-        .sectionHeading {
-          display: flex;
-          align-items: flex-start;
-          gap: 13px;
-          margin-bottom: 20px;
-        }
-
-        .sectionHeading > span {
-          font-size: 25px;
-        }
-
-        .sectionHeading h2,
-        .resultsTitle h2,
-        .sourceSection h2 {
-          color: #ffffff;
-          margin: 0 0 7px;
-        }
-
-        .sectionHeading p {
-          color: #9fa6b2;
-          line-height: 1.7;
-          margin: 0;
-        }
-
-        .searchForm {
-          display: flex;
-          gap: 10px;
-        }
-
-        .searchForm input {
-          flex: 1;
-          min-width: 0;
-          background: #090b10;
-          color: #ffffff;
-          border: 1px solid #303640;
-          border-radius: 12px;
-          padding: 15px 16px;
-          font-size: 16px;
-          outline: none;
-        }
-
-        .searchForm input:focus {
-          border-color: #d4af37;
-          box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-        }
-
-        .searchButton,
-        .resetButton,
-        .resultCard button {
-          border: 0;
-          border-radius: 12px;
-          padding: 14px 22px;
-          cursor: pointer;
-          font-weight: 700;
-          transition: 0.2s ease;
-        }
-
-        .searchButton,
-        .resultCard button {
-          color: #0b0d11;
-          background: #d4af37;
-        }
-
-        .searchButton:hover,
-        .resultCard button:hover {
-          background: #ebca5b;
-        }
-
-        .resetButton {
-          color: #ffffff;
-          background: #292e38;
-        }
-
-        button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .errorMessage {
-          color: #ffb4b4;
-          background: rgba(255, 70, 70, 0.08);
-          border: 1px solid rgba(255, 70, 70, 0.25);
-          border-radius: 12px;
-          padding: 14px;
-          margin-top: 15px;
-        }
-
-        .detailsError {
-          margin-top: 22px;
-        }
-
-        .loadingBox {
-          text-align: center;
-          color: #c4c8d0;
-          padding: 40px 20px;
-        }
-
-        .loader {
-          width: 38px;
-          height: 38px;
-          margin: 0 auto 14px;
-          border: 3px solid #313641;
-          border-top-color: #d4af37;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .resultsTitle {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 15px;
-          margin-bottom: 18px;
-        }
-
-        .resultsTitle span {
-          color: #d4af37;
-        }
-
-        .resultsGrid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
-        }
-
-        .resultCard {
-          display: flex;
-          flex-direction: column;
-          background: #0a0d12;
-          border: 1px solid #252b35;
-          border-radius: 16px;
-          padding: 18px;
-          min-height: 245px;
-        }
-
-        .resultTop {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .companyIcon {
-          font-size: 25px;
-        }
-
-        .entityId {
-          color: #d4af37;
-          background: rgba(212, 175, 55, 0.08);
-          padding: 5px 9px;
-          border-radius: 8px;
-          font-size: 13px;
-        }
-
-        .resultCard h3 {
-          color: #ffffff;
-          margin: 18px 0 10px;
-        }
-
-        .resultCard p {
-          flex: 1;
-          color: #9ea5b1;
-          line-height: 1.7;
-          margin: 0 0 18px;
-        }
-
-        .detailsSection {
-          scroll-margin-top: 20px;
-          border-color: rgba(212, 175, 55, 0.38);
-        }
-
-        .detailsHeader {
-          display: flex;
-          align-items: center;
-          gap: 22px;
-          padding-bottom: 24px;
-          border-bottom: 1px solid #292e38;
-        }
-
-        .logoBox {
-          display: grid;
-          place-items: center;
-          width: 120px;
-          height: 120px;
-          flex-shrink: 0;
-          background: #ffffff;
-          border-radius: 18px;
-          overflow: hidden;
-          padding: 12px;
-        }
-
-        .logoBox img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
-
-        .logoBox span {
-          font-size: 48px;
-        }
-
-        .companyHeading h2 {
-          color: #ffffff;
-          font-size: 30px;
-          margin: 12px 0 9px;
-        }
-
-        .companyHeading p {
-          color: #b1b6c0;
-          line-height: 1.8;
-          margin: 0;
-        }
-
-        .infoGrid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 14px;
-          margin-top: 24px;
-        }
-
-        .infoCard {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          background: #090c11;
-          border: 1px solid #252b35;
-          border-radius: 14px;
-          padding: 17px;
-        }
-
-        .infoCard > span {
-          font-size: 24px;
-        }
-
-        .infoCard small {
-          display: block;
-          color: #8e96a3;
-          margin-bottom: 6px;
-        }
-
-        .infoCard strong {
-          color: #ffffff;
-          word-break: break-word;
-        }
-
-        .actionLinks {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-top: 24px;
-        }
-
-        .primaryLink,
-        .secondaryLink {
-          display: inline-flex;
-          justify-content: center;
-          text-decoration: none;
-          border-radius: 12px;
-          padding: 13px 18px;
-          font-weight: 700;
-        }
-
-        .primaryLink {
-          color: #0a0c10;
-          background: #d4af37;
-        }
-
-        .secondaryLink {
-          color: #d4af37;
-          border: 1px solid rgba(212, 175, 55, 0.45);
-        }
-
-        .missingWebsite {
-          color: #aeb4be;
-          margin: 18px 0 0;
-        }
-
-        .verificationWarning {
-          background: rgba(255, 152, 0, 0.07);
-          border: 1px solid rgba(255, 152, 0, 0.25);
-          border-radius: 14px;
-          padding: 17px;
-          margin-top: 22px;
-        }
-
-        .verificationWarning strong {
-          color: #ffbf5b;
-        }
-
-        .verificationWarning p {
-          color: #c6c9cf;
-          line-height: 1.8;
-          margin: 8px 0 0;
-        }
-
-        .fetchDate {
-          color: #858d99;
-          font-size: 14px;
-          margin-top: 18px;
-        }
-
-        .comingSoon {
-          display: flex;
-          gap: 14px;
-          background: #090c11;
-          border: 1px solid #292f39;
-          border-radius: 15px;
-          padding: 18px;
-        }
-
-        .comingSoon > span {
-          font-size: 25px;
-        }
-
-        .comingSoon strong {
-          color: #ffffff;
-        }
-
-        .comingSoon p {
-          color: #a7aeba;
-          line-height: 1.8;
-          margin: 7px 0 0;
-        }
-
-        .sourceSection ul {
-          color: #adb3be;
-          line-height: 2;
-          margin: 14px 0 0;
-          padding-right: 22px;
-        }
-
-        @media (max-width: 900px) {
-          .resultsGrid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-
-          .infoGrid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 620px) {
-          .page {
-            padding: 20px 12px 50px;
-          }
-
-          .searchSection,
-          .resultsSection,
-          .detailsSection,
-          .reviewsSection,
-          .sourceSection {
-            padding: 18px;
-            border-radius: 16px;
-          }
-
-          .searchForm {
-            flex-direction: column;
-          }
-
-          .searchForm button {
-            width: 100%;
-          }
-
-          .resultsGrid,
-          .infoGrid {
-            grid-template-columns: 1fr;
-          }
-
-          .detailsHeader {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .logoBox {
-            width: 100px;
-            height: 100px;
-          }
-
-          .companyHeading h2 {
-            font-size: 25px;
-          }
-
-          .actionLinks {
-            flex-direction: column;
-          }
-
-          .primaryLink,
-          .secondaryLink {
-            width: 100%;
-          }
-        }
-      `}</style>
     </main>
   );
 }
