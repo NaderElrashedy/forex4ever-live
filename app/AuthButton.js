@@ -39,5 +39,5 @@ export default function AuthButton() {
     );
   }
 
-  return <Link href="/login">تسجيل الدخول   style={styles.signup}</Link>;
+  return <Link href="/login">تسجيل الدخول </Link>;
 }
