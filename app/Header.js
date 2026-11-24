@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import AuthButton from "./AuthButton";
 
-const navLinks = [
+const navigationLinks = [
   { href: "/", label: "الرئيسية" },
   { href: "/academy", label: "الأكاديمية" },
   { href: "/live", label: "البث المباشر" },
@@ -16,430 +16,329 @@ const navLinks = [
   { href: "/risk-calculator", label: "حاسبة المخاطر" },
 ];
 
-// إذا كان مسار التسجيل عندك /register غيّر السطر التالي فقط
-const REGISTER_URL = "/signup";
-
 export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
 
+  // إغلاق القائمة عند الانتقال إلى صفحة أخرى
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
 
+  // إغلاق القائمة عند الضغط على Escape
   useEffect(() => {
-    function handleKeyDown(event) {
+    function handleEscape(event) {
       if (event.key === "Escape") {
         setMenuOpen(false);
       }
     }
 
-    function handleOutsideClick(event) {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target)
-      ) {
-        setMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("mousedown", handleOutsideClick);
+    window.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleOutsideClick);
+      window.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
-  function isActiveLink(href) {
+  function isActive(href) {
     if (href === "/") {
       return pathname === "/";
     }
 
-    return pathname === href || pathname?.startsWith(`${href}/`);
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
+  function closeMenu() {
+    setMenuOpen(false);
   }
 
   return (
-    <header className="siteHeader">
-      <div className="headerGlow" />
-
-      <div className="headerContainer">
-        {/* اللوجو واسم الموقع */}
-        <Link href="/" className="brand" aria-label="Forex4Ever الرئيسية">
-          <span className="logoIcon" aria-hidden="true">
-            <span className="logoLetters">F4</span>
-            <span className="logoLine" />
-          </span>
-
-          <span className="brandContent">
-            <span className="brandName">
-              <span className="forexText">Forex</span>
-              <span className="everText">4Ever</span>
-            </span>
-
-            <span className="brandDescription">
-              الأسواق والتداول
-            </span>
-          </span>
-        </Link>
-
-        {/* روابط الكمبيوتر */}
-        <nav className="desktopNavigation" aria-label="القائمة الرئيسية">
-          {navLinks.map((link) => {
-            const active = isActiveLink(link.href);
-
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`navLink ${active ? "activeLink" : ""}`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* خيارات الحساب على الكمبيوتر */}
-        <div className="desktopAccount">
-          <div className="authWrapper">
-            <AuthButton />
-          </div>
-
-          <Link href={REGISTER_URL} className="signupButton">
-            إنشاء حساب
+    <>
+      <header className="siteHeader" dir="rtl">
+        <div className="headerContainer">
+          {/* الشعار */}
+          <Link
+            href="/"
+            className="logo"
+            onClick={closeMenu}
+            aria-label="Forex4Ever الرئيسية"
+          >
+            <span className="logoForex">Forex</span>
+            <span className="logoGold">4Ever</span>
           </Link>
-        </div>
 
-        {/* زر قائمة الهاتف */}
-        <div className="mobileMenuArea" ref={menuRef}>
+          {/* زر قائمة الموبايل */}
           <button
             type="button"
             className={`menuButton ${menuOpen ? "menuButtonOpen" : ""}`}
             onClick={() => setMenuOpen((current) => !current)}
             aria-label={menuOpen ? "إغلاق القائمة" : "فتح القائمة"}
             aria-expanded={menuOpen}
-            aria-controls="mobile-navigation"
+            aria-controls="main-navigation"
           >
             <span />
             <span />
             <span />
           </button>
 
-          {/* قائمة الهاتف */}
-          {menuOpen && (
-            <div
-              id="mobile-navigation"
-              className="mobileMenu"
-              role="dialog"
-              aria-label="قائمة الموقع"
-            >
-              <div className="mobileMenuHeader">
-                <div>
-                  <strong>قائمة الموقع</strong>
-                  <span>اختر الصفحة التي تريد زيارتها</span>
-                </div>
-
-                <button
-                  type="button"
-                  className="closeButton"
-                  onClick={() => setMenuOpen(false)}
-                  aria-label="إغلاق القائمة"
-                >
-                  ×
-                </button>
+          {/* القائمة */}
+          <nav
+            id="main-navigation"
+            className={`navigation ${menuOpen ? "navigationOpen" : ""}`}
+            aria-label="القائمة الرئيسية"
+          >
+            <div className="mobileMenuTitle">
+              <div>
+                <strong>القائمة الرئيسية</strong>
+                <span>تصفح أقسام Forex4Ever</span>
               </div>
 
-              <nav className="mobileNavigation">
-                {navLinks.map((link) => {
-                  const active = isActiveLink(link.href);
-
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`mobileLink ${
-                        active ? "activeMobileLink" : ""
-                      }`}
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <span className="mobileLinkDot" />
-                      <span>{link.label}</span>
-
-                      <span className="mobileArrow" aria-hidden="true">
-                        ←
-                      </span>
-                    </Link>
-                  );
-                })}
-              </nav>
-
-              <div className="mobileAccount">
-                <div className="mobileAuth">
-                  <AuthButton />
-                </div>
-
-                <Link
-                  href={REGISTER_URL}
-                  className="mobileSignupButton"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  إنشاء حساب مجاني
-                </Link>
-              </div>
+              <button
+                type="button"
+                onClick={closeMenu}
+                aria-label="إغلاق القائمة"
+              >
+                ×
+              </button>
             </div>
-          )}
+
+            <div className="navigationLinks">
+              {navigationLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className={`navLink ${
+                    isActive(item.href) ? "activeLink" : ""
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="accountArea">
+              <div className="authButtonWrapper">
+                <AuthButton />
+              </div>
+
+              <Link
+                href="/signup"
+                className="signupButton"
+                onClick={closeMenu}
+              >
+                إنشاء حساب
+              </Link>
+            </div>
+          </nav>
         </div>
-      </div>
+      </header>
+
+      {/* خلفية خلف قائمة الموبايل */}
+      {menuOpen && (
+        <button
+          type="button"
+          className="menuOverlay"
+          onClick={closeMenu}
+          aria-label="إغلاق القائمة"
+        />
+      )}
 
       <style jsx>{`
-        .siteHeader {
-          position: relative;
-          z-index: 50;
-          width: 100%;
-          direction: rtl;
-          background:
-            radial-gradient(
-              circle at 15% 0%,
-              rgba(212, 175, 55, 0.1),
-              transparent 30%
-            ),
-            linear-gradient(
-              135deg,
-              #080b11 0%,
-              #0e131b 50%,
-              #080b11 100%
-            );
-          border-bottom: 1px solid rgba(212, 175, 55, 0.22);
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
+        :global(*) {
+          box-sizing: border-box;
         }
 
-        .headerGlow {
-          position: absolute;
-          right: 0;
-          bottom: -1px;
-          width: 35%;
-          height: 1px;
-          pointer-events: none;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            #d4af37,
-            transparent
-          );
+        .siteHeader {
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+          width: 100%;
+          padding: 0 5%;
+          border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+          background: rgba(7, 11, 18, 0.96);
+          box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
         }
 
         .headerContainer {
           position: relative;
-          width: min(100% - 32px, 1540px);
-          min-height: 82px;
-          margin-inline: auto;
           display: flex;
+          width: min(1450px, 100%);
+          min-height: 76px;
+          margin: 0 auto;
           align-items: center;
+          justify-content: space-between;
           gap: 24px;
         }
 
-        /* ===== اللوجو ===== */
-
-        .brand {
-          flex: 0 0 auto;
+        /* الشعار */
+        .logo {
           display: inline-flex;
-          align-items: center;
-          gap: 12px;
-          color: white;
-          text-decoration: none;
-        }
-
-        .logoIcon {
-          position: relative;
-          width: 49px;
-          height: 49px;
           flex-shrink: 0;
-          display: grid;
-          place-items: center;
-          overflow: hidden;
-          border: 1px solid rgba(240, 199, 76, 0.75);
-          border-radius: 15px 6px 15px 6px;
-          background:
-            linear-gradient(
-              145deg,
-              rgba(244, 205, 91, 0.25),
-              rgba(212, 175, 55, 0.05)
-            ),
-            #10151e;
-          box-shadow:
-            0 0 0 4px rgba(212, 175, 55, 0.05),
-            0 10px 25px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.12);
-          transform: rotate(-2deg);
-          transition:
-            transform 0.25s ease,
-            border-color 0.25s ease,
-            box-shadow 0.25s ease;
-        }
-
-        .logoIcon::before {
-          content: "";
-          position: absolute;
-          top: -25px;
-          right: -26px;
-          width: 58px;
-          height: 58px;
-          border-radius: 50%;
-          background: rgba(239, 196, 68, 0.16);
-        }
-
-        .logoLetters {
-          position: relative;
-          z-index: 2;
-          direction: ltr;
-          font-size: 18px;
-          font-weight: 900;
-          letter-spacing: -1px;
-          color: #f3cb55;
-          text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
-        }
-
-        .logoLine {
-          position: absolute;
-          right: 8px;
-          bottom: 9px;
-          width: 27px;
-          height: 7px;
-          border-top: 2px solid #f3cb55;
-          border-right: 2px solid #f3cb55;
-          transform: skewX(-30deg);
-          opacity: 0.85;
-        }
-
-        .brand:hover .logoIcon {
-          transform: translateY(-2px) rotate(0);
-          border-color: #f3cb55;
-          box-shadow:
-            0 0 0 5px rgba(212, 175, 55, 0.08),
-            0 12px 28px rgba(0, 0, 0, 0.35);
-        }
-
-        .brandContent {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          line-height: 1;
-        }
-
-        .brandName {
-          direction: ltr;
-          display: inline-flex;
-          align-items: baseline;
-          font-size: 23px;
+          align-items: center;
+          color: #ffffff;
+          font-size: 26px;
           font-weight: 900;
           letter-spacing: -0.8px;
-          white-space: nowrap;
+          text-decoration: none;
+          transition:
+            transform 0.2s ease,
+            opacity 0.2s ease;
         }
 
-        .forexText {
+        .logo:hover {
+          transform: translateY(-1px);
+        }
+
+        .logoForex {
           color: #ffffff;
         }
 
-        .everText {
-          color: #efc44a;
+        .logoGold {
+          position: relative;
+          color: #d8b447;
+          text-shadow: 0 0 20px rgba(216, 180, 71, 0.25);
         }
 
-        .brandDescription {
-          margin-top: 7px;
-          color: #8e98a8;
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.3px;
-          white-space: nowrap;
+        .logoGold::after {
+          position: absolute;
+          right: 0;
+          bottom: -5px;
+          width: 65%;
+          height: 2px;
+          border-radius: 10px;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            #d8b447
+          );
+          content: "";
         }
 
-        /* ===== روابط الكمبيوتر ===== */
+        /* القائمة على الكمبيوتر */
+        .navigation {
+          display: flex;
+          flex: 1;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 18px;
+        }
 
-        .desktopNavigation {
-          min-width: 0;
-          flex: 1 1 auto;
+        .navigationLinks {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: clamp(9px, 1.05vw, 20px);
-          white-space: nowrap;
+          gap: 3px;
         }
 
         .navLink {
           position: relative;
           display: inline-flex;
-          align-items: center;
           min-height: 42px;
-          padding: 8px 2px;
-          color: #d5d9df;
-          font-size: clamp(12px, 0.83vw, 14px);
-          font-weight: 700;
+          padding: 0 10px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 9px;
+          color: #d9dce1;
+          font-size: 14px;
+          font-weight: 600;
+          line-height: 1;
           text-decoration: none;
+          white-space: nowrap;
           transition:
             color 0.2s ease,
+            background 0.2s ease,
             transform 0.2s ease;
         }
 
+        .navLink:hover {
+          color: #e2bd50;
+          background: rgba(212, 175, 55, 0.07);
+          transform: translateY(-1px);
+        }
+
         .navLink::after {
-          content: "";
           position: absolute;
           right: 50%;
           bottom: 3px;
           width: 0;
           height: 2px;
           border-radius: 20px;
-          background: linear-gradient(90deg, #b8891e, #f6d66f);
+          background: #d4af37;
+          content: "";
           transform: translateX(50%);
-          transition: width 0.25s ease;
+          transition: width 0.2s ease;
         }
 
-        .navLink:hover {
-          color: #f5ce5b;
-          transform: translateY(-1px);
-        }
-
-        .navLink:hover::after {
-          width: 70%;
+        .navLink:hover::after,
+        .activeLink::after {
+          width: 23px;
         }
 
         .activeLink {
-          color: #f5ce5b;
+          color: #e4c15a;
+          background: rgba(212, 175, 55, 0.08);
         }
 
-        .activeLink::after {
-          width: 70%;
-        }
-
-        /* ===== الحساب ===== */
-
-        .desktopAccount {
-          flex: 0 0 auto;
+        /* الحساب */
+        .accountArea {
           display: flex;
+          flex-shrink: 0;
           align-items: center;
           gap: 10px;
-          padding-right: 5px;
+          padding-right: 17px;
           border-right: 1px solid rgba(255, 255, 255, 0.09);
         }
 
-        .authWrapper {
+        .authButtonWrapper {
           display: flex;
           align-items: center;
+        }
+
+        .authButtonWrapper :global(a),
+        .authButtonWrapper :global(button) {
+          display: inline-flex;
+          min-height: 40px;
+          padding: 0 13px;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(212, 175, 55, 0.25);
+          border-radius: 9px;
+          color: #d9b74e;
+          background: transparent;
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none;
+          white-space: nowrap;
+          cursor: pointer;
+          transition: 0.2s ease;
+        }
+
+        .authButtonWrapper :global(a:hover),
+        .authButtonWrapper :global(button:hover) {
+          border-color: rgba(212, 175, 55, 0.5);
+          color: #f0cf69;
+          background: rgba(212, 175, 55, 0.07);
         }
 
         .signupButton {
           display: inline-flex;
+          min-height: 41px;
+          padding: 0 15px;
           align-items: center;
           justify-content: center;
-          min-height: 42px;
-          padding: 9px 15px;
-          border: 1px solid #d4af37;
-          border-radius: 11px;
-          color: #0b0e13;
-          background: linear-gradient(135deg, #f6d66f, #c99626);
-          box-shadow: 0 8px 20px rgba(212, 175, 55, 0.16);
+          border: 1px solid #dfbc50;
+          border-radius: 9px;
+          color: #10130f;
+          background: linear-gradient(
+            135deg,
+            #f0ce68,
+            #c89b29
+          );
+          box-shadow: 0 7px 20px rgba(212, 175, 55, 0.12);
           font-size: 13px;
           font-weight: 900;
           text-decoration: none;
@@ -451,266 +350,281 @@ export default function Header() {
 
         .signupButton:hover {
           transform: translateY(-2px);
-          box-shadow: 0 11px 25px rgba(212, 175, 55, 0.25);
+          box-shadow: 0 10px 25px rgba(212, 175, 55, 0.22);
         }
 
-        /* ===== قائمة الشاشات الصغيرة ===== */
-
-        .mobileMenuArea {
-          position: relative;
+        /* عناصر الموبايل مخفية على الكمبيوتر */
+        .menuButton,
+        .mobileMenuTitle {
           display: none;
-          margin-right: auto;
         }
 
-        .menuButton {
-          width: 46px;
-          height: 43px;
-          padding: 10px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-          border: 1px solid rgba(212, 175, 55, 0.4);
-          border-radius: 12px;
-          cursor: pointer;
-          background: rgba(212, 175, 55, 0.07);
+        .menuOverlay {
+          display: none;
         }
 
-        .menuButton span {
-          display: block;
-          width: 22px;
-          height: 2px;
-          border-radius: 20px;
-          background: #f2cb58;
-          transition:
-            transform 0.2s ease,
-            opacity 0.2s ease;
-        }
-
-        .menuButtonOpen span:nth-child(1) {
-          transform: translateY(7px) rotate(45deg);
-        }
-
-        .menuButtonOpen span:nth-child(2) {
-          opacity: 0;
-        }
-
-        .menuButtonOpen span:nth-child(3) {
-          transform: translateY(-7px) rotate(-45deg);
-        }
-
-        .mobileMenu {
-          position: absolute;
-          top: calc(100% + 15px);
-          left: 0;
-          width: min(390px, calc(100vw - 28px));
-          max-height: calc(100vh - 115px);
-          overflow-y: auto;
-          border: 1px solid rgba(212, 175, 55, 0.28);
-          border-radius: 18px;
-          background:
-            radial-gradient(
-              circle at 0 0,
-              rgba(212, 175, 55, 0.12),
-              transparent 35%
-            ),
-            #0c1119;
-          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.58);
-        }
-
-        .mobileMenuHeader {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 15px;
-          padding: 18px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-        }
-
-        .mobileMenuHeader div {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-        }
-
-        .mobileMenuHeader strong {
-          color: #f1ca56;
-          font-size: 16px;
-        }
-
-        .mobileMenuHeader span {
-          color: #8e98a8;
-          font-size: 11px;
-        }
-
-        .closeButton {
-          width: 35px;
-          height: 35px;
-          flex-shrink: 0;
-          display: grid;
-          place-items: center;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
-          color: #ffffff;
-          background: rgba(255, 255, 255, 0.05);
-          font-size: 25px;
-          line-height: 1;
-          cursor: pointer;
-        }
-
-        .mobileNavigation {
-          display: grid;
-          gap: 5px;
-          padding: 12px;
-        }
-
-        .mobileLink {
-          display: flex;
-          align-items: center;
-          gap: 11px;
-          min-height: 48px;
-          padding: 10px 13px;
-          border: 1px solid transparent;
-          border-radius: 11px;
-          color: #dce0e6;
-          background: rgba(255, 255, 255, 0.025);
-          font-size: 14px;
-          font-weight: 700;
-          text-decoration: none;
-          transition:
-            color 0.2s ease,
-            background 0.2s ease,
-            border-color 0.2s ease;
-        }
-
-        .mobileLink:hover,
-        .activeMobileLink {
-          color: #f2ca56;
-          border-color: rgba(212, 175, 55, 0.2);
-          background: rgba(212, 175, 55, 0.08);
-        }
-
-        .mobileLinkDot {
-          width: 7px;
-          height: 7px;
-          flex-shrink: 0;
-          border-radius: 50%;
-          background: #596272;
-        }
-
-        .activeMobileLink .mobileLinkDot,
-        .mobileLink:hover .mobileLinkDot {
-          background: #f2ca56;
-          box-shadow: 0 0 10px rgba(242, 202, 86, 0.5);
-        }
-
-        .mobileArrow {
-          margin-right: auto;
-          color: #687384;
-        }
-
-        .mobileAccount {
-          display: grid;
-          gap: 10px;
-          padding: 15px;
-          border-top: 1px solid rgba(255, 255, 255, 0.07);
-        }
-
-        .mobileAuth {
-          display: flex;
-          justify-content: center;
-        }
-
-        .mobileSignupButton {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 46px;
-          padding: 10px 15px;
-          border: 1px solid #d4af37;
-          border-radius: 12px;
-          color: #090c11;
-          background: linear-gradient(135deg, #f5d46a, #c89425);
-          font-size: 14px;
-          font-weight: 900;
-          text-decoration: none;
-        }
-
-        /* إظهار القائمة قبل بدء تداخل روابط الكمبيوتر */
-        @media (max-width: 1240px) {
-          .desktopNavigation,
-          .desktopAccount {
-            display: none;
-          }
-
-          .mobileMenuArea {
-            display: block;
+        /* الشاشات المتوسطة */
+        @media (max-width: 1250px) {
+          .siteHeader {
+            padding-right: 3%;
+            padding-left: 3%;
           }
 
           .headerContainer {
-            min-height: 76px;
+            gap: 15px;
+          }
+
+          .navigation {
+            gap: 10px;
+          }
+
+          .navigationLinks {
+            gap: 0;
+          }
+
+          .navLink {
+            padding-right: 7px;
+            padding-left: 7px;
+            font-size: 13px;
+          }
+
+          .accountArea {
+            gap: 7px;
+            padding-right: 10px;
           }
         }
 
-        @media (max-width: 600px) {
+        /* قائمة الموبايل */
+        @media (max-width: 1000px) {
+          .siteHeader {
+            padding: 0 18px;
+          }
+
           .headerContainer {
-            width: min(100% - 22px, 1540px);
-            min-height: 70px;
+            min-height: 68px;
           }
 
-          .brand {
-            gap: 9px;
-          }
-
-          .logoIcon {
-            width: 43px;
-            height: 43px;
-            border-radius: 13px 5px 13px 5px;
-          }
-
-          .logoLetters {
-            font-size: 16px;
-          }
-
-          .brandName {
-            font-size: 20px;
-          }
-
-          .brandDescription {
-            margin-top: 5px;
-            font-size: 9px;
+          .logo {
+            font-size: 24px;
           }
 
           .menuButton {
-            width: 43px;
-            height: 41px;
+            position: relative;
+            display: flex;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 5px;
+            border: 1px solid rgba(212, 175, 55, 0.28);
+            border-radius: 12px;
+            background: rgba(212, 175, 55, 0.06);
+            cursor: pointer;
+            transition: 0.2s ease;
           }
 
-          .mobileMenu {
-            top: calc(100% + 12px);
+          .menuButton:hover {
+            border-color: rgba(212, 175, 55, 0.55);
+            background: rgba(212, 175, 55, 0.1);
           }
-        }
 
-        @media (max-width: 370px) {
-          .brandDescription {
+          .menuButton span {
+            display: block;
+            width: 21px;
+            height: 2px;
+            border-radius: 10px;
+            background: #e3c260;
+            transition:
+              transform 0.25s ease,
+              opacity 0.2s ease;
+          }
+
+          .menuButtonOpen span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+          }
+
+          .menuButtonOpen span:nth-child(2) {
+            opacity: 0;
+          }
+
+          .menuButtonOpen span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+          }
+
+          .navigation {
+            position: absolute;
+            top: calc(100% + 11px);
+            right: 0;
+            z-index: 1002;
+            display: flex;
+            width: min(390px, calc(100vw - 36px));
+            max-height: calc(100vh - 95px);
+            padding: 18px;
+            align-items: stretch;
+            justify-content: flex-start;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            border: 1px solid rgba(212, 175, 55, 0.24);
+            border-radius: 20px;
+            background:
+              radial-gradient(
+                circle at 100% 0,
+                rgba(212, 175, 55, 0.1),
+                transparent 38%
+              ),
+              rgba(8, 13, 24, 0.99);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.55);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-12px) scale(0.97);
+            transform-origin: top right;
+            transition:
+              opacity 0.22s ease,
+              visibility 0.22s ease,
+              transform 0.22s ease;
+          }
+
+          .navigationOpen {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+          }
+
+          .mobileMenuTitle {
+            display: flex;
+            padding: 3px 3px 15px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          }
+
+          .mobileMenuTitle div {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+          }
+
+          .mobileMenuTitle strong {
+            color: #f2f2f0;
+            font-size: 16px;
+          }
+
+          .mobileMenuTitle span {
+            color: #7f8791;
+            font-size: 11px;
+          }
+
+          .mobileMenuTitle button {
+            display: grid;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 9px;
+            color: #aeb4bd;
+            background: rgba(255, 255, 255, 0.03);
+            font-size: 23px;
+            line-height: 1;
+            cursor: pointer;
+          }
+
+          .navigationLinks {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+          }
+
+          .navLink {
+            min-height: 47px;
+            padding: 0 12px;
+            justify-content: flex-start;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 11px;
+            color: #d7dae0;
+            background: rgba(255, 255, 255, 0.025);
+            font-size: 13px;
+          }
+
+          .navLink::after {
             display: none;
           }
 
-          .brandName {
-            font-size: 18px;
+          .navLink:hover,
+          .activeLink {
+            border-color: rgba(212, 175, 55, 0.25);
+            color: #e5c461;
+            background: rgba(212, 175, 55, 0.08);
+            transform: none;
           }
 
-          .logoIcon {
-            width: 40px;
-            height: 40px;
+          .accountArea {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 9px;
+            padding: 15px 0 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-right: 0;
           }
 
-          .headerContainer {
-            width: calc(100% - 16px);
+          .authButtonWrapper,
+          .authButtonWrapper :global(a),
+          .authButtonWrapper :global(button),
+          .signupButton {
+            width: 100%;
+          }
+
+          .authButtonWrapper :global(a),
+          .authButtonWrapper :global(button),
+          .signupButton {
+            min-height: 45px;
+          }
+
+          .menuOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: block;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border: 0;
+            background: rgba(0, 0, 0, 0.58);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            cursor: default;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .siteHeader {
+            padding: 0 13px;
+          }
+
+          .navigation {
+            right: 0;
+            width: calc(100vw - 26px);
+            padding: 15px;
+            border-radius: 17px;
+          }
+
+          .navigationLinks {
+            grid-template-columns: 1fr;
+          }
+
+          .navLink {
+            min-height: 44px;
+          }
+
+          .accountArea {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
-    </header>
+    </>
   );
 }
