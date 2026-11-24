@@ -156,8 +156,9 @@ function HomeLiveTicker() {
 
 export default function HomePage() {
   return (
-    <FloatingSocialMenu />
+    
     <main className="site">
+    <FloatingSocialMenu />
       {/* خلفية التصميم */}
       <div className="background-grid" aria-hidden="true" />
       <div className="glow glow-one" aria-hidden="true" />
