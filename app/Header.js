@@ -14,6 +14,9 @@ export default function Header() {
         <Link href="/live" style={styles.link}>البث المباشر</Link>
         <Link href="/markets" style={styles.link}>الأسواق</Link>
         <Link href="/news" style={styles.link}>الأخبار</Link>
+    <Link href="/brokers" className={styles.navLink}>
+  دليل الشركات
+</Link>
         <Link href="/risk-calculator" style={styles.link}>
   حاسبة المخاطر
 </Link>
