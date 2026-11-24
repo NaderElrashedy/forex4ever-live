@@ -1,5 +1,5 @@
 "use client";
-
+import FloatingSocialMenu from "./components/FloatingSocialMenu";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
@@ -156,6 +156,7 @@ function HomeLiveTicker() {
 
 export default function HomePage() {
   return (
+    <FloatingSocialMenu />
     <main className="site">
       {/* خلفية التصميم */}
       <div className="background-grid" aria-hidden="true" />
