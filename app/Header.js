@@ -14,7 +14,7 @@ const navigationLinks = [
   { href: "/news", label: "الأخبار" },
   { href: "/brokers", label: "فتح حساب تداول" },
 //  { href: "/risk-calculator", label: "حاسبة المخاطر" },
-  { href: "//trading-room", label: "غرفة التداول" },
+  { href: "/trading-room", label: "غرفة التداول" },
 
 ];
 
