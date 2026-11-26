@@ -13,7 +13,9 @@ const navigationLinks = [
   { href: "/egypt-prices", label: "أسعار مصر" },
   { href: "/news", label: "الأخبار" },
   { href: "/brokers", label: "فتح حساب تداول" },
-  { href: "/risk-calculator", label: "حاسبة المخاطر" },
+//  { href: "/risk-calculator", label: "حاسبة المخاطر" },
+  { href: "//trading-room", label: "غرفة التداول" },
+
 ];
 
 export default function Header() {
