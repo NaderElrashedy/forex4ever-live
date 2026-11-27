@@ -1,1175 +1,987 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-
-import GameHUD from "./components/GameHUD";
-import GamePhone from "./components/GamePhone";
-import MissionScreen from "./components/MissionScreen";
-import MobileControls from "./components/MobileControls";
-import MysteryBox from "./components/MysteryBox";
-import TMGMGuide from "./components/TMGMGuide";
-
+import styles from "./tmgm-quest.module.css";
+import { ALL_STAGES, TOTAL_STAGES, WORLDS } from "./questData";
 import {
-  DISTRICTS,
-  MISSIONS,
-  TOTAL_MISSIONS,
-  getDistrictMissions,
-} from "./data/missionData";
-
-import {
-  completeMission,
-  isMissionCompleted,
-  isMissionUnlocked,
+  DEFAULT_PROGRESS,
+  completeStage,
+  evaluateStage,
+  getAccuracy,
+  getPlayerLevel,
+  getRank,
+  getWorldCompletion,
+  isStageCompleted,
+  isStageUnlocked,
   loadProgress,
   markBoxOpened,
-  purchaseUpgrade,
   registerWrongAnswer,
   resetProgress,
   saveProgress,
-} from "./game/saveSystem";
+} from "./questEngine";
 
-import {
-  playSound,
-  setAudioEnabled,
-  startEngineSound,
-  stopEngineSound,
-  unlockAudio,
-  updateEngineSound,
-} from "./game/audio";
-
-import styles from "./tmgm-quest.module.css";
-
-const GameCanvas = dynamic(
-  () => import("./components/GameCanvas"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className={styles.canvasLoading}>
-        <div className={styles.loadingCore}>
-          <strong>T</strong>
-        </div>
-
-        <div>
-          <strong>BUILDING TMGM MARKET CITY</strong>
-          <span>Preparing the 3D world...</span>
-        </div>
-      </div>
-    ),
-  }
-);
-
-const GUIDE_MESSAGES = {
+const MESSAGES = {
   welcome:
-    "Welcome to TMGM Market City. Drive toward the illuminated gate and press E to enter your first educational mission.",
-
-  ready:
-    "A trading mission is available at this gate. Slow down, review the objective and press E when you are ready.",
-
-  success:
-    "Excellent decision. Discipline protected your plan, reduced Risk Heat and opened the next route.",
-
-  warning:
-    "A high-risk decision has been detected. Slow down, review your plan and try again.",
-
+    "Welcome to TMGM Market City. Drive through six districts, complete every mission and unlock the Golden Mystery Box.",
+  select:
+    "Choose carefully. A disciplined decision is more powerful than a fast decision.",
+  correct:
+    "Mission complete! Your discipline reduced Risk Heat and unlocked the next route.",
+  wrong:
+    "Risk Heat increased. Review the mission hint and try again without rushing.",
   locked:
-    "This mission is still locked. Complete the earlier missions to open the next city route.",
-
-  phone:
-    "The City Phone contains your map, missions, Risk Scanner, badges, garage and Mystery Box progress.",
-
-  golden:
-    "You reached the Golden Castle. The final chamber is ready for the Market City Champion.",
+    "This route is protected. Complete the previous mission to unlock it.",
+  final:
+    "The Golden Castle is open. Enter the vault and unlock the Mystery Box.",
 };
 
-function getInitialDistrict() {
+function playTone(type, soundEnabled) {
+  if (!soundEnabled || typeof window === "undefined") return;
+
+  try {
+    const AudioContext =
+      window.AudioContext || window.webkitAudioContext;
+
+    const context = new AudioContext();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+
+    oscillator.type = type === "success" ? "sine" : "triangle";
+    oscillator.frequency.setValueAtTime(
+      type === "success" ? 520 : 170,
+      context.currentTime
+    );
+
+    if (type === "success") {
+      oscillator.frequency.exponentialRampToValueAtTime(
+        960,
+        context.currentTime + 0.28
+      );
+    }
+
+    gain.gain.setValueAtTime(0.06, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      context.currentTime + 0.4
+    );
+
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.4);
+  } catch {
+    // Audio is optional.
+  }
+}
+
+function CityBackground({ mouse }) {
+  const buildings = Array.from({ length: 18 }, (_, index) => index);
+  const particles = Array.from({ length: 30 }, (_, index) => index);
+
   return (
-    DISTRICTS[0] || {
-      id: "downtown",
-      name: "TMGM Downtown",
-      shortName: "Downtown",
-      position: 20,
-      color: "#31d7ff",
-      icon: "◈",
-    }
+    <div className={styles.cityBackground} aria-hidden="true">
+      <div
+        className={styles.skyGlow}
+        style={{
+          transform: `translate3d(${mouse.x * 10}px, ${mouse.y * 7}px, 0)`,
+        }}
+      />
+
+      <div className={styles.moon} />
+
+      <div className={styles.stars}>
+        {particles.map((particle) => (
+          <i
+            key={particle}
+            style={{
+              "--x": `${(particle * 37) % 100}%`,
+              "--y": `${(particle * 23) % 72}%`,
+              "--delay": `${(particle % 8) * -0.45}s`,
+              "--size": `${2 + (particle % 4)}px`,
+            }}
+          />
+        ))}
+      </div>
+
+      <svg
+        className={styles.priceLine}
+        viewBox="0 0 1440 260"
+        preserveAspectRatio="none"
+      >
+        <path d="M0 190 L90 170 L160 205 L250 120 L340 145 L440 80 L520 112 L620 42 L720 91 L820 60 L920 125 L1040 75 L1140 98 L1250 38 L1440 65" />
+      </svg>
+
+      <div
+        className={styles.buildings}
+        style={{
+          transform: `translate3d(${mouse.x * -8}px, ${mouse.y * -3}px, 0)`,
+        }}
+      >
+        {buildings.map((building) => (
+          <span
+            key={building}
+            style={{
+              "--height": `${100 + ((building * 47) % 250)}px`,
+              "--width": `${45 + ((building * 19) % 75)}px`,
+              "--delay": `${(building % 7) * -0.6}s`,
+            }}
+          >
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
+        ))}
+      </div>
+
+      <div className={styles.fog} />
+      <div className={styles.roadGrid} />
+      <div className={styles.scanLine} />
+    </div>
   );
 }
 
-function extractProgress(result, fallbackProgress) {
-  if (!result) {
-    return fallbackProgress;
-  }
+function TMGMGuide({ message, mood }) {
+  return (
+    <aside
+      className={`${styles.guide} ${
+        mood === "correct" ? styles.guideCorrect : ""
+      } ${mood === "wrong" ? styles.guideWrong : ""}`}
+    >
+      <div className={styles.guideVisual}>
+        <div className={styles.guideRing} />
+        <div className={styles.guideHead}>
+          <div className={styles.guideEyes}>
+            <i />
+            <i />
+          </div>
+          <strong>T</strong>
+        </div>
+        <div className={styles.guideBody}>
+          <span>TMGM</span>
+          <i />
+        </div>
+      </div>
 
-  if (result.progress) {
-    return result.progress;
-  }
-
-  if (
-    typeof result === "object" &&
-    Array.isArray(result.completedMissions)
-  ) {
-    return result;
-  }
-
-  return fallbackProgress;
+      <div className={styles.guideCopy}>
+        <small>TMGM GUIDE • ONLINE</small>
+        <p>{message}</p>
+      </div>
+    </aside>
+  );
 }
 
-function findNextMission(progress) {
-  if (!progress) {
-    return MISSIONS[0] || null;
-  }
+function SequenceChallenge({ stage, onChange }) {
+  const [items, setItems] = useState(() => [...stage.items].reverse());
 
-  const completedMissions = Array.isArray(
-    progress.completedMissions
-  )
-    ? progress.completedMissions
-    : [];
+  useEffect(() => {
+    const reversed = [...stage.items].reverse();
+    setItems(reversed);
+    onChange(reversed);
+  }, [stage, onChange]);
+
+  function moveItem(index, direction) {
+    const target = index + direction;
+    if (target < 0 || target >= items.length) return;
+
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    setItems(next);
+    onChange(next);
+  }
 
   return (
-    MISSIONS.find(
-      (mission) =>
-        !completedMissions.includes(mission.id) &&
-        isMissionUnlocked(progress, mission)
-    ) ||
-    MISSIONS.find(
-      (mission) => !completedMissions.includes(mission.id)
-    ) ||
-    null
+    <div className={styles.sequenceList}>
+      {items.map((item, index) => (
+        <div className={styles.sequenceItem} key={item}>
+          <span>{index + 1}</span>
+          <strong>{item}</strong>
+
+          <div>
+            <button
+              type="button"
+              onClick={() => moveItem(index, -1)}
+              disabled={index === 0}
+              aria-label="Move up"
+            >
+              ↑
+            </button>
+
+            <button
+              type="button"
+              onClick={() => moveItem(index, 1)}
+              disabled={index === items.length - 1}
+              aria-label="Move down"
+            >
+              ↓
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
-function resolveMissionReference(missionReference) {
-  if (!missionReference) {
-    return null;
+function ChallengeModal({
+  stage,
+  progress,
+  onClose,
+  onCorrect,
+  onWrong,
+}) {
+  const [answer, setAnswer] = useState(null);
+  const [status, setStatus] = useState("idle");
+
+  useEffect(() => {
+    setAnswer(null);
+    setStatus("idle");
+  }, [stage]);
+
+  if (!stage) return null;
+
+  const completed = isStageCompleted(progress, stage);
+
+  function submitAnswer() {
+    if (!answer) return;
+
+    if (evaluateStage(stage, answer)) {
+      setStatus("correct");
+      onCorrect(stage);
+    } else {
+      setStatus("wrong");
+      onWrong();
+    }
   }
 
-  if (
-    typeof missionReference === "object" &&
-    missionReference.id
-  ) {
-    return (
-      MISSIONS.find(
-        (mission) => mission.id === missionReference.id
-      ) || missionReference
-    );
-  }
+  return (
+    <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
+      <div
+        className={`${styles.challengeModal} ${
+          status === "wrong" ? styles.wrongShake : ""
+        }`}
+      >
+        <button
+          type="button"
+          className={styles.modalClose}
+          onClick={onClose}
+          aria-label="Close mission"
+        >
+          ×
+        </button>
 
-  if (typeof missionReference === "number") {
-    return (
-      MISSIONS.find(
-        (mission) => mission.number === missionReference
-      ) || null
-    );
-  }
+        <div className={styles.missionHeading}>
+          <span style={{ color: stage.worldColor }}>
+            {stage.worldIcon}
+          </span>
 
-  if (typeof missionReference === "string") {
-    return (
-      MISSIONS.find(
-        (mission) =>
-          mission.id === missionReference ||
-          String(mission.number) === missionReference
-      ) || null
-    );
-  }
+          <div>
+            <small>
+              MISSION {String(stage.number).padStart(2, "0")} •{" "}
+              {stage.worldName}
+            </small>
+            <h2>{stage.title}</h2>
+          </div>
+        </div>
 
-  return null;
+        <div className={styles.missionChart}>
+          {Array.from({ length: 12 }, (_, index) => (
+            <i
+              key={index}
+              className={index % 3 === 0 ? styles.redCandle : ""}
+              style={{
+                "--candle-height": `${30 + ((index * 23) % 70)}px`,
+                "--delay": `${index * 0.06}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        <h3>{stage.question}</h3>
+
+        {stage.kind === "sequence" ? (
+          <SequenceChallenge stage={stage} onChange={setAnswer} />
+        ) : (
+          <div className={styles.optionsGrid}>
+            {stage.options.map((option) => (
+              <button
+                type="button"
+                key={option}
+                className={answer === option ? styles.selectedOption : ""}
+                onClick={() => {
+                  setAnswer(option);
+                  setStatus("idle");
+                }}
+              >
+                <span />
+                {option}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {status === "wrong" && (
+          <div className={styles.wrongResult}>
+            <strong>⚠ Risk Heat increased</strong>
+            <p>{stage.hint}</p>
+          </div>
+        )}
+
+        {status === "correct" && (
+          <div className={styles.correctResult}>
+            <strong>✓ Mission Complete</strong>
+            <p>
+              +{stage.reward} points • +{stage.coins} coins
+            </p>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className={styles.primaryButton}
+          onClick={status === "correct" ? onClose : submitAnswer}
+          disabled={!answer}
+        >
+          {status === "correct"
+            ? "Return to Market City"
+            : completed
+              ? "Check Answer Again"
+              : "Complete Mission"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
-export default function TMGMQuestPage() {
-  const audioUnlockedRef = useRef(false);
-  const readyGuideShownRef = useRef(false);
+function GamePhone({
+  open,
+  onClose,
+  progress,
+  soundEnabled,
+  setSoundEnabled,
+  onReset,
+}) {
+  if (!open) return null;
 
-  const [hydrated, setHydrated] = useState(false);
-  const [progress, setProgress] = useState(null);
+  return (
+    <div className={styles.phoneOverlay} onClick={onClose}>
+      <div className={styles.phone} onClick={(event) => event.stopPropagation()}>
+        <div className={styles.phoneTop}>
+          <span>09:41</span>
+          <i />
+          <span>5G ▰</span>
+        </div>
 
-  const [activeDistrict, setActiveDistrict] = useState(
-    getInitialDistrict
+        <div className={styles.phoneHeader}>
+          <small>TMGM CITY OS</small>
+          <h2>Market Phone</h2>
+        </div>
+
+        <div className={styles.phoneApps}>
+          <article>
+            <span>⌖</span>
+            <strong>City Map</strong>
+            <small>{progress.completedStages.length}/30 routes</small>
+          </article>
+
+          <article>
+            <span>◇</span>
+            <strong>Risk Scanner</strong>
+            <small>{progress.riskHeat}% heat</small>
+          </article>
+
+          <article>
+            <span>♛</span>
+            <strong>Badges</strong>
+            <small>{progress.badges.length}/6 collected</small>
+          </article>
+
+          <article>
+            <span>▰</span>
+            <strong>Garage</strong>
+            <small>{progress.coins} coins</small>
+          </article>
+        </div>
+
+        <button
+          type="button"
+          className={styles.phoneAction}
+          onClick={() => setSoundEnabled((value) => !value)}
+        >
+          {soundEnabled ? "🔊 Sound Enabled" : "🔇 Sound Disabled"}
+        </button>
+
+        <button
+          type="button"
+          className={styles.phoneReset}
+          onClick={onReset}
+        >
+          Reset City Progress
+        </button>
+
+        <button
+          type="button"
+          className={styles.phoneHome}
+          onClick={onClose}
+          aria-label="Close phone"
+        />
+      </div>
+    </div>
   );
+}
 
-  const [vehicleState, setVehicleState] = useState({
-    speed: 0,
-    speedKmh: 0,
-    distance: Infinity,
-    journeyProgress: 0,
-    braking: false,
-    handbrake: false,
-    accelerating: false,
-  });
+function MysteryBox({ progress, setProgress, soundEnabled }) {
+  const [hold, setHold] = useState(0);
+  const [opening, setOpening] = useState(false);
+  const timerRef = useRef(null);
 
-  const [phoneOpen, setPhoneOpen] = useState(false);
-  const [phoneApp, setPhoneApp] = useState("home");
-  const [phoneKey, setPhoneKey] = useState(0);
+  const finished = progress.completedStages.length === TOTAL_STAGES;
 
-  const [missionOpen, setMissionOpen] = useState(false);
-  const [activeMission, setActiveMission] = useState(null);
-
-  const [mysteryBoxOpen, setMysteryBoxOpen] =
-    useState(false);
-
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [cityReady, setCityReady] = useState(false);
-
-  const [deviceMode, setDeviceMode] = useState({
-    lowQuality: false,
-    reducedMotion: false,
-  });
-
-  const [guide, setGuide] = useState({
-    visible: true,
-    mood: "idle",
-    message: GUIDE_MESSAGES.welcome,
-  });
-
-  const gamePaused =
-    phoneOpen || missionOpen || mysteryBoxOpen;
-
-  const completedMissionCount =
-    progress?.completedMissions?.length || 0;
-
-  const districtMissions = useMemo(() => {
-    if (!activeDistrict?.id) {
-      return [];
+  function stopHold() {
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
     }
 
-    return getDistrictMissions(activeDistrict.id) || [];
-  }, [activeDistrict]);
+    if (!opening) setHold(0);
+  }
 
-  const nearestMission = useMemo(() => {
-    if (!progress || districtMissions.length === 0) {
-      return null;
-    }
+  function startHold() {
+    if (!finished || progress.boxOpened || opening) return;
 
-    const incompleteUnlockedMission = districtMissions.find(
-      (mission) =>
-        !isMissionCompleted(progress, mission) &&
-        isMissionUnlocked(progress, mission)
-    );
+    setHold(0);
 
-    if (incompleteUnlockedMission) {
-      return incompleteUnlockedMission;
-    }
+    timerRef.current = window.setInterval(() => {
+      setHold((current) => {
+        const next = current + 4;
 
-    const incompleteMission = districtMissions.find(
-      (mission) => !isMissionCompleted(progress, mission)
-    );
+        if (next >= 100) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+          setOpening(true);
+          playTone("success", soundEnabled);
 
-    if (incompleteMission) {
-      return incompleteMission;
-    }
+          window.setTimeout(() => {
+            setProgress((currentProgress) =>
+              markBoxOpened(currentProgress)
+            );
+          }, 1500);
 
-    return districtMissions[districtMissions.length - 1] || null;
-  }, [districtMissions, progress]);
-
-  const missionAvailable = Boolean(
-    nearestMission &&
-      Number(vehicleState.distance) <= 14 &&
-      !missionOpen &&
-      !phoneOpen &&
-      !mysteryBoxOpen
-  );
-
-  const showGuide = useCallback(
-    (mood, message, visible = true) => {
-      setGuide({
-        visible,
-        mood,
-        message,
-      });
-    },
-    []
-  );
-
-  /*
-   * Load locally saved progress.
-   */
-  useEffect(() => {
-    const savedProgress = loadProgress();
-
-    setProgress(savedProgress);
-    setHydrated(true);
-  }, []);
-
-  /*
-   * Save progress after every relevant change.
-   */
-  useEffect(() => {
-    if (!hydrated || !progress) {
-      return;
-    }
-
-    saveProgress(progress);
-  }, [hydrated, progress]);
-
-  /*
-   * Unlock browser audio after the player's first interaction.
-   * Browsers do not allow automatic sound before user input.
-   */
-  useEffect(() => {
-    if (!soundEnabled) {
-      return undefined;
-    }
-
-    const unlockGameAudio = async () => {
-      if (audioUnlockedRef.current) {
-        return;
-      }
-
-      const unlocked = await unlockAudio();
-
-      if (!unlocked) {
-        return;
-      }
-
-      audioUnlockedRef.current = true;
-
-      await startEngineSound(true);
-
-      /*
-       * Start silently. The next vehicle update decides
-       * whether the engine should become audible.
-       */
-      await updateEngineSound(0, 160, false, true);
-    };
-
-    const handleKeyboardUnlock = (event) => {
-      const acceptedKeys = [
-        "w",
-        "W",
-        "s",
-        "S",
-        "a",
-        "A",
-        "d",
-        "D",
-        "ArrowUp",
-        "ArrowDown",
-        "ArrowLeft",
-        "ArrowRight",
-        " ",
-      ];
-
-      if (!acceptedKeys.includes(event.key)) {
-        return;
-      }
-
-      unlockGameAudio();
-    };
-
-    window.addEventListener("pointerdown", unlockGameAudio, {
-      passive: true,
-    });
-
-    window.addEventListener("touchstart", unlockGameAudio, {
-      passive: true,
-    });
-
-    window.addEventListener(
-      "keydown",
-      handleKeyboardUnlock
-    );
-
-    return () => {
-      window.removeEventListener(
-        "pointerdown",
-        unlockGameAudio
-      );
-
-      window.removeEventListener(
-        "touchstart",
-        unlockGameAudio
-      );
-
-      window.removeEventListener(
-        "keydown",
-        handleKeyboardUnlock
-      );
-    };
-  }, [soundEnabled]);
-
-  /*
-   * Enable or disable the complete audio system.
-   */
-  useEffect(() => {
-    setAudioEnabled(soundEnabled);
-
-    if (!soundEnabled) {
-      stopEngineSound();
-      audioUnlockedRef.current = false;
-    }
-  }, [soundEnabled]);
-
-  /*
-   * Connect the vehicle speed to the engine sound.
-   *
-   * Important:
-   * - No engine sound while stopped.
-   * - No engine sound while the game is paused.
-   * - No engine sound while the phone, mission or box is open.
-   */
-  useEffect(() => {
-    if (
-      !soundEnabled ||
-      !audioUnlockedRef.current
-    ) {
-      return;
-    }
-
-    const currentSpeed = Math.abs(
-      Number(
-        vehicleState.speedKmh ?? vehicleState.speed ?? 0
-      )
-    );
-
-    const vehicleIsBraking = Boolean(
-      vehicleState.braking
-    );
-
-    const handbrakeIsActive = Boolean(
-      vehicleState.handbrake
-    );
-
-    const vehicleIsAccelerating =
-      Boolean(vehicleState.accelerating) ||
-      (currentSpeed > 2 &&
-        !vehicleIsBraking &&
-        !handbrakeIsActive &&
-        !gamePaused);
-
-    /*
-     * Opening the phone, a mission or the final box
-     * sends zero speed to the audio engine.
-     */
-    if (gamePaused) {
-      updateEngineSound(
-        0,
-        160,
-        false,
-        soundEnabled
-      );
-
-      return;
-    }
-
-    updateEngineSound(
-      currentSpeed,
-      160,
-      vehicleIsAccelerating,
-      soundEnabled
-    );
-  }, [
-    soundEnabled,
-    gamePaused,
-    vehicleState.speed,
-    vehicleState.speedKmh,
-    vehicleState.accelerating,
-    vehicleState.braking,
-    vehicleState.handbrake,
-  ]);
-
-  /*
-   * Stop the engine when the player leaves the page,
-   * changes the browser tab or minimizes the browser.
-   */
-  useEffect(() => {
-    const stopPageAudio = () => {
-      stopEngineSound();
-      audioUnlockedRef.current = false;
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopPageAudio();
-      }
-    };
-
-    document.addEventListener(
-      "visibilitychange",
-      handleVisibilityChange
-    );
-
-    window.addEventListener("pagehide", stopPageAudio);
-
-    return () => {
-      document.removeEventListener(
-        "visibilitychange",
-        handleVisibilityChange
-      );
-
-      window.removeEventListener(
-        "pagehide",
-        stopPageAudio
-      );
-
-      stopPageAudio();
-    };
-  }, []);
-
-  /*
-   * Display the mission-ready guide message once
-   * when the vehicle reaches an available gate.
-   */
-  useEffect(() => {
-    if (missionAvailable && !readyGuideShownRef.current) {
-      readyGuideShownRef.current = true;
-
-      showGuide(
-        "thinking",
-        GUIDE_MESSAGES.ready,
-        true
-      );
-
-      return;
-    }
-
-    if (!missionAvailable) {
-      readyGuideShownRef.current = false;
-    }
-  }, [missionAvailable, showGuide]);
-
-  const openPhone = useCallback(
-    async (appName = "home") => {
-      setPhoneApp(appName || "home");
-      setPhoneKey((currentKey) => currentKey + 1);
-      setPhoneOpen(true);
-
-      /*
-       * Immediately silence the vehicle when
-       * the City Phone opens.
-       */
-      if (audioUnlockedRef.current) {
-        updateEngineSound(0, 160, false, soundEnabled);
-      }
-
-      if (soundEnabled) {
-        await playSound("phone", true);
-      }
-
-      showGuide(
-        "idle",
-        GUIDE_MESSAGES.phone,
-        true
-      );
-    },
-    [showGuide, soundEnabled]
-  );
-
-  const closePhone = useCallback(() => {
-    setPhoneOpen(false);
-  }, []);
-
-  const startMission = useCallback(
-    (missionReference) => {
-      if (!progress) {
-        return;
-      }
-
-      const mission =
-        resolveMissionReference(missionReference) ||
-        nearestMission;
-
-      if (!mission) {
-        return;
-      }
-
-      if (!isMissionUnlocked(progress, mission)) {
-        if (soundEnabled) {
-          playSound("wrong", true);
+          return 100;
         }
 
-        showGuide(
-          "warning",
-          GUIDE_MESSAGES.locked,
-          true
-        );
-
-        return;
-      }
-
-      /*
-       * Silence the motor before opening the mission.
-       */
-      if (audioUnlockedRef.current) {
-        updateEngineSound(0, 160, false, soundEnabled);
-      }
-
-      setActiveMission(mission);
-      setPhoneOpen(false);
-      setMissionOpen(true);
-
-      showGuide(
-        "thinking",
-        `Mission ${mission.number}: ${mission.title}`,
-        true
-      );
-    },
-    [
-      nearestMission,
-      progress,
-      showGuide,
-      soundEnabled,
-    ]
-  );
-
-  const requestMission = useCallback(
-    (missionReference) => {
-      if (
-        phoneOpen ||
-        missionOpen ||
-        mysteryBoxOpen
-      ) {
-        return;
-      }
-
-      const mission =
-        resolveMissionReference(missionReference) ||
-        nearestMission;
-
-      if (!mission) {
-        return;
-      }
-
-      const distance = Number(vehicleState.distance);
-
-      if (Number.isFinite(distance) && distance > 14) {
-        showGuide(
-          "idle",
-          "Drive closer to the illuminated mission gate before entering.",
-          true
-        );
-
-        return;
-      }
-
-      startMission(mission);
-    },
-    [
-      missionOpen,
-      mysteryBoxOpen,
-      nearestMission,
-      phoneOpen,
-      showGuide,
-      startMission,
-      vehicleState.distance,
-    ]
-  );
-
-  const handleMissionCorrect = useCallback(() => {
-    if (!progress || !activeMission) {
-      return;
-    }
-
-    const result = completeMission(
-      progress,
-      activeMission
-    );
-
-    const updatedProgress = extractProgress(
-      result,
-      progress
-    );
-
-    setProgress(updatedProgress);
-
-    if (soundEnabled) {
-      playSound("success", true);
-
-      window.setTimeout(() => {
-        playSound("coin", true);
-      }, 180);
-    }
-
-    showGuide(
-      "success",
-      GUIDE_MESSAGES.success,
-      true
-    );
-  }, [
-    activeMission,
-    progress,
-    showGuide,
-    soundEnabled,
-  ]);
-
-  const handleMissionWrong = useCallback(() => {
-    if (!progress) {
-      return;
-    }
-
-    const result = registerWrongAnswer(progress);
-
-    const updatedProgress = extractProgress(
-      result,
-      progress
-    );
-
-    setProgress(updatedProgress);
-
-    if (soundEnabled) {
-      playSound("wrong", true);
-    }
-
-    showGuide(
-      "warning",
-      GUIDE_MESSAGES.warning,
-      true
-    );
-  }, [progress, showGuide, soundEnabled]);
-
-  const closeMission = useCallback(() => {
-    setMissionOpen(false);
-    setActiveMission(null);
-  }, []);
-
-  const handlePurchaseUpgrade = useCallback(
-    (upgradeType) => {
-      if (!progress) {
-        return null;
-      }
-
-      const previousCoins = Number(progress.coins || 0);
-
-      const result = purchaseUpgrade(
-        progress,
-        upgradeType
-      );
-
-      const updatedProgress = extractProgress(
-        result,
-        progress
-      );
-
-      const newCoins = Number(
-        updatedProgress.coins || 0
-      );
-
-      const purchaseSucceeded =
-        newCoins < previousCoins;
-
-      setProgress(updatedProgress);
-
-      if (soundEnabled) {
-        playSound(
-          purchaseSucceeded ? "coin" : "wrong",
-          true
-        );
-      }
-
-      return result;
-    },
-    [progress, soundEnabled]
-  );
-
-  const handleBoxOpened = useCallback(() => {
-    if (!progress) {
-      return;
-    }
-
-    const result = markBoxOpened(progress);
-
-    const updatedProgress = extractProgress(
-      result,
-      progress
-    );
-
-    setProgress(updatedProgress);
-
-    if (soundEnabled) {
-      playSound("box", true);
-    }
-
-    showGuide(
-      "golden",
-      GUIDE_MESSAGES.golden,
-      true
-    );
-  }, [progress, showGuide, soundEnabled]);
-
-  const handleReset = useCallback(() => {
-    const shouldReset = window.confirm(
-      "Reset all TMGM Market City progress saved on this device?"
-    );
-
-    if (!shouldReset) {
-      return;
-    }
-
-    stopEngineSound();
-    audioUnlockedRef.current = false;
-
-    const freshProgress = resetProgress();
-
-    setProgress(freshProgress);
-    setActiveDistrict(getInitialDistrict());
-    setVehicleState({
-      speed: 0,
-      speedKmh: 0,
-      distance: Infinity,
-      journeyProgress: 0,
-      braking: false,
-      handbrake: false,
-      accelerating: false,
-    });
-
-    setPhoneOpen(false);
-    setMissionOpen(false);
-    setActiveMission(null);
-    setMysteryBoxOpen(false);
-
-    showGuide(
-      "idle",
-      GUIDE_MESSAGES.welcome,
-      true
-    );
-  }, [showGuide]);
-
-  const findMissionFromPhone = useCallback(
-    (missionReference) => {
-      const mission =
-        resolveMissionReference(missionReference) ||
-        findNextMission(progress);
-
-      setPhoneOpen(false);
-
-      if (!mission) {
-        showGuide(
-          "success",
-          "All available missions have been completed.",
-          true
-        );
-
-        return;
-      }
-
-      const district = DISTRICTS.find(
-        (item) => item.id === mission.districtId
-      );
-
-      if (district) {
-        setActiveDistrict(district);
-      }
-
-      showGuide(
-        "thinking",
-        `GPS selected Mission ${mission.number}: ${mission.title}. Follow the illuminated route.`,
-        true
-      );
-    },
-    [progress, showGuide]
-  );
-
-  const restartJourney = useCallback(() => {
-    stopEngineSound();
-    audioUnlockedRef.current = false;
-
-    const freshProgress = resetProgress();
-
-    setProgress(freshProgress);
-    setMysteryBoxOpen(false);
-    setMissionOpen(false);
-    setActiveMission(null);
-    setPhoneOpen(false);
-    setActiveDistrict(getInitialDistrict());
-
-    setVehicleState({
-      speed: 0,
-      speedKmh: 0,
-      distance: Infinity,
-      journeyProgress: 0,
-      braking: false,
-      handbrake: false,
-      accelerating: false,
-    });
-
-    showGuide(
-      "idle",
-      GUIDE_MESSAGES.welcome,
-      true
-    );
-  }, [showGuide]);
-
-  const toggleSound = useCallback(async () => {
-    if (soundEnabled) {
-      setSoundEnabled(false);
-      stopEngineSound();
-      audioUnlockedRef.current = false;
-      return;
-    }
-
-    setSoundEnabled(true);
-    setAudioEnabled(true);
-
-    const unlocked = await unlockAudio();
-
-    if (!unlocked) {
-      return;
-    }
-
-    audioUnlockedRef.current = true;
-
-    await startEngineSound(true);
-
-    /*
-     * Restart silently. The speed effect will increase
-     * the sound only when the vehicle moves.
-     */
-    await updateEngineSound(0, 160, false, true);
-    await playSound("phone", true);
-  }, [soundEnabled]);
-
-  const openMysteryBox = useCallback(() => {
-    if (!progress) {
-      return;
-    }
-
-    if (completedMissionCount < TOTAL_MISSIONS) {
-      if (soundEnabled) {
-        playSound("wrong", true);
-      }
-
-      showGuide(
-        "warning",
-        `Complete all ${TOTAL_MISSIONS} missions before entering the Mystery Box chamber.`,
-        true
-      );
-
-      return;
-    }
-
-    /*
-     * Silence the vehicle before the final sequence.
-     */
-    if (audioUnlockedRef.current) {
-      updateEngineSound(0, 160, false, soundEnabled);
-    }
-
-    setPhoneOpen(false);
-    setMysteryBoxOpen(true);
-
-    showGuide(
-      "golden",
-      GUIDE_MESSAGES.golden,
-      true
-    );
-  }, [
-    completedMissionCount,
-    progress,
-    showGuide,
-    soundEnabled,
-  ]);
-
-  const handleDistrictChange = useCallback(
-    (districtReference) => {
-      let district = districtReference;
-
-      if (typeof districtReference === "string") {
-        district = DISTRICTS.find(
-          (item) => item.id === districtReference
-        );
-      }
-
-      if (!district?.id) {
-        return;
-      }
-
-      setActiveDistrict(district);
-
-      if (district.id === "golden-castle") {
-        showGuide(
-          "golden",
-          GUIDE_MESSAGES.golden,
-          true
-        );
-      }
-    },
-    [showGuide]
-  );
-
-  const handleVehicleUpdate = useCallback(
-    (nextVehicleState) => {
-      if (!nextVehicleState) {
-        return;
-      }
-
-      setVehicleState((currentState) => ({
-        ...currentState,
-        ...nextVehicleState,
-      }));
-    },
-    []
-  );
-
-  const handleCityReady = useCallback((mode) => {
-    setDeviceMode({
-      lowQuality: Boolean(mode?.lowQuality),
-      reducedMotion: Boolean(mode?.reducedMotion),
-    });
-
-    setCityReady(true);
-  }, []);
-
-  if (!hydrated || !progress) {
-    return (
-      <main className={styles.loadingPage}>
-        <div className={styles.loadingCity}>
-          <div className={styles.loadingCore}>
-            <strong>T</strong>
+        return next;
+      });
+    }, 70);
+  }
+
+  useEffect(() => () => stopHold(), []);
+
+  if (!finished) return null;
+
+  return (
+    <section
+      className={`${styles.vault} ${
+        progress.boxOpened ? styles.openedVault : ""
+      }`}
+    >
+      <div className={styles.vaultBeam} />
+
+      <div className={styles.goldenGuide}>
+        <span>T</span>
+        <strong>TMGM GOLDEN GUIDE</strong>
+      </div>
+
+      <div
+        className={`${styles.mysteryBox} ${
+          opening ? styles.boxOpening : ""
+        } ${progress.boxOpened ? styles.boxOpened : ""}`}
+      >
+        <div className={styles.boxLight} />
+        <div className={styles.boxLid} />
+        <div className={styles.boxBody}>
+          <strong>TMGM</strong>
+          <span>♛</span>
+        </div>
+      </div>
+
+      {!progress.boxOpened ? (
+        <div className={styles.unlockArea}>
+          <h2>The Golden Mystery Box</h2>
+          <p>Press and hold the lock to open the final vault.</p>
+
+          <button
+            type="button"
+            className={styles.holdButton}
+            onPointerDown={startHold}
+            onPointerUp={stopHold}
+            onPointerLeave={stopHold}
+            onPointerCancel={stopHold}
+          >
+            <span style={{ width: `${hold}%` }} />
+            <strong>{hold === 100 ? "UNLOCKING..." : "HOLD TO UNLOCK"}</strong>
+          </button>
+        </div>
+      ) : (
+        <div className={styles.rewardCard}>
+          <small>JOURNEY COMPLETED</small>
+          <h2>The Golden Mystery Box</h2>
+          <p>
+            Congratulations! You completed all 30 educational missions
+            across TMGM Market City.
+          </p>
+
+          <div>
+            <span>{progress.points} Points</span>
+            <span>{progress.badges.length} Badges</span>
           </div>
 
-          <h1>TMGM MARKET CITY 3D</h1>
-
-          <p>Loading your locally saved journey...</p>
+          <strong>
+            Demo reward only. This does not represent or guarantee a real
+            prize.
+          </strong>
         </div>
+      )}
+
+      {(opening || progress.boxOpened) && (
+        <div className={styles.confetti} aria-hidden="true">
+          {Array.from({ length: 45 }, (_, index) => (
+            <i
+              key={index}
+              style={{
+                "--x": `${(index * 41) % 100}%`,
+                "--delay": `${(index % 12) * -0.12}s`,
+                "--color":
+                  index % 3 === 0
+                    ? "#f6cf66"
+                    : index % 3 === 1
+                      ? "#31d7ff"
+                      : "#ffffff",
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export default function TMGMMarketCityPage() {
+  const [ready, setReady] = useState(false);
+  const [progress, setProgress] = useState(DEFAULT_PROGRESS);
+  const [selectedStage, setSelectedStage] = useState(null);
+  const [message, setMessage] = useState(MESSAGES.welcome);
+  const [mood, setMood] = useState("idle");
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [phoneOpen, setPhoneOpen] = useState(false);
+  const [carPosition, setCarPosition] = useState(12);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    setProgress(loadProgress());
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (ready) saveProgress(progress);
+  }, [progress, ready]);
+
+  useEffect(() => {
+    function handleMove(event) {
+      setMouse({
+        x: event.clientX / window.innerWidth - 0.5,
+        y: event.clientY / window.innerHeight - 0.5,
+      });
+    }
+
+    function handleKey(event) {
+      if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
+        setCarPosition((value) => Math.min(82, value + 4));
+      }
+
+      if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
+        setCarPosition((value) => Math.max(5, value - 4));
+      }
+
+      if (event.key.toLowerCase() === "p") {
+        setPhoneOpen((value) => !value);
+      }
+    }
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("keydown", handleKey);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, []);
+
+  const completion = Math.round(
+    (progress.completedStages.length / TOTAL_STAGES) * 100
+  );
+
+  const accuracy = useMemo(() => getAccuracy(progress), [progress]);
+  const level = useMemo(() => getPlayerLevel(progress), [progress]);
+  const rank = useMemo(() => getRank(progress), [progress]);
+
+  function openStage(stage) {
+    if (!isStageUnlocked(progress, stage)) {
+      setMood("wrong");
+      setMessage(MESSAGES.locked);
+      playTone("wrong", soundEnabled);
+      return;
+    }
+
+    setSelectedStage(stage);
+    setMood("idle");
+    setMessage(MESSAGES.select);
+  }
+
+  function handleCorrect(stage) {
+    const wasCompleted = isStageCompleted(progress, stage);
+    const next = completeStage(progress, stage);
+
+    setProgress(next);
+    setMood("correct");
+    setMessage(
+      next.completedStages.length === TOTAL_STAGES
+        ? MESSAGES.final
+        : MESSAGES.correct
+    );
+
+    if (!wasCompleted) playTone("success", soundEnabled);
+  }
+
+  function handleWrong() {
+    setProgress((current) => registerWrongAnswer(current));
+    setMood("wrong");
+    setMessage(MESSAGES.wrong);
+    playTone("wrong", soundEnabled);
+  }
+
+  function handleReset() {
+    const confirmed = window.confirm(
+      "Reset all Market City progress? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    setProgress(resetProgress());
+    setSelectedStage(null);
+    setPhoneOpen(false);
+    setMood("idle");
+    setMessage(MESSAGES.welcome);
+    setCarPosition(12);
+  }
+
+  if (!ready) {
+    return (
+      <main className={styles.loadingScreen}>
+        <div className={styles.loadingCore}>T</div>
+        <h1>Loading TMGM Market City...</h1>
       </main>
     );
   }
 
   return (
-    <main className={styles.gamePage}>
-      <GameCanvas
-        progress={progress}
-        gamePaused={gamePaused}
-        onDistrictChange={handleDistrictChange}
-        onVehicleUpdate={handleVehicleUpdate}
-        onMissionRequest={requestMission}
-        onTogglePhone={() => openPhone("home")}
-        onToggleMap={() => openPhone("map")}
-        onReady={handleCityReady}
-      />
+    <main className={styles.game}>
+      <CityBackground mouse={mouse} />
 
-      {!cityReady && (
-        <div className={styles.worldPreparing}>
-          <span>INITIALIZING 3D CITY</span>
-        </div>
-      )}
-
-      <div
-        className={styles.cityVignette}
-        aria-hidden="true"
-      />
-
-      <div
-        className={styles.cityScanlines}
-        aria-hidden="true"
-      />
-
-      <header className={styles.gameNavigation}>
-        <Link href="/" className={styles.gameBrand}>
+      <header className={styles.header}>
+        <div className={styles.brand}>
           <span>T</span>
-
           <div>
-            <strong>TMGM MARKET CITY</strong>
-            <small>3D EDUCATIONAL EXPERIENCE</small>
+            <strong>TMGM</strong>
+            <small>MARKET CITY</small>
           </div>
-        </Link>
-
-        <div className={styles.performanceMode}>
-          <strong>
-            {deviceMode.lowQuality
-              ? "MOBILE MODE"
-              : "CINEMATIC MODE"}
-          </strong>
-
-          {deviceMode.reducedMotion && (
-            <span className={styles.modeWarning}>
-              REDUCED MOTION
-            </span>
-          )}
         </div>
 
-        <Link href="/" className={styles.exitGame}>
-          EXIT CITY
-        </Link>
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            onClick={() => setSoundEnabled((value) => !value)}
+          >
+            {soundEnabled ? "🔊 SOUND ON" : "🔇 SOUND OFF"}
+          </button>
+
+          <button type="button" onClick={() => setPhoneOpen(true)}>
+            ▣ CITY PHONE
+          </button>
+
+          <Link href="/">EXIT CITY</Link>
+        </div>
       </header>
 
-      <GameHUD
+      <section className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <small>WELCOME TO THE FINANCIAL OPEN CITY</small>
+          <h1>
+            Drive. Learn.
+            <span> Control The Risk.</span>
+          </h1>
+          <p>
+            Explore six futuristic districts, complete 30 educational
+            trading missions and unlock the Golden Mystery Box.
+          </p>
+
+          <div className={styles.heroTags}>
+            <span>30 Missions</span>
+            <span>6 Districts</span>
+            <span>Risk Heat System</span>
+          </div>
+        </div>
+
+        <TMGMGuide message={message} mood={mood} />
+      </section>
+
+      <section className={styles.hud}>
+        <article>
+          <small>PLAYER LEVEL</small>
+          <strong>{level}</strong>
+          <span>{rank}</span>
+        </article>
+
+        <article>
+          <small>QUEST POINTS</small>
+          <strong>{progress.points}</strong>
+          <span>City reputation</span>
+        </article>
+
+        <article>
+          <small>CITY COINS</small>
+          <strong>{progress.coins}</strong>
+          <span>Garage currency</span>
+        </article>
+
+        <article>
+          <small>COMPLETED</small>
+          <strong>
+            {progress.completedStages.length}/{TOTAL_STAGES}
+          </strong>
+          <span>{completion}% of the city</span>
+        </article>
+
+        <article>
+          <small>ACCURACY</small>
+          <strong>{accuracy}%</strong>
+          <span>Decision quality</span>
+        </article>
+      </section>
+
+      <section className={styles.riskPanel}>
+        <div>
+          <strong>RISK HEAT</strong>
+          <small>
+            Risk Heat rises after unsafe decisions and falls after
+            disciplined missions.
+          </small>
+        </div>
+
+        <div className={styles.riskTrack}>
+          <span style={{ width: `${progress.riskHeat}%` }} />
+        </div>
+
+        <b>{progress.riskHeat}%</b>
+      </section>
+
+      <section className={styles.cityMap}>
+        <div className={styles.sectionTitle}>
+          <div>
+            <small>INTERACTIVE JOURNEY</small>
+            <h2>Market City Districts</h2>
+          </div>
+
+          <p>
+            Complete missions in order to unlock new roads and districts.
+          </p>
+        </div>
+
+        <div className={styles.worlds}>
+          {WORLDS.map((world, worldIndex) => {
+            const stages = ALL_STAGES.filter(
+              (stage) => stage.worldId === world.id
+            );
+
+            const worldCompletion = getWorldCompletion(
+              progress,
+              world.id
+            );
+
+            const worldLocked = stages[0].number > progress.unlockedStage;
+
+            return (
+              <article
+                className={`${styles.world} ${
+                  worldLocked ? styles.lockedWorld : ""
+                }`}
+                key={world.id}
+                style={{ "--world-color": world.color }}
+              >
+                <div className={styles.worldSky}>
+                  <div className={styles.worldPortal}>
+                    <span>{worldLocked ? "⌁" : world.icon}</span>
+                  </div>
+
+                  <div className={styles.miniBuildings}>
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                  </div>
+                </div>
+
+                <div className={styles.worldContent}>
+                  <small>
+                    DISTRICT {String(worldIndex + 1).padStart(2, "0")}
+                  </small>
+                  <h3>{world.name}</h3>
+                  <strong>{world.subtitle}</strong>
+                  <p>{world.description}</p>
+
+                  <div className={styles.worldProgress}>
+                    <span>
+                      <i style={{ width: `${worldCompletion}%` }} />
+                    </span>
+                    <b>{worldCompletion}%</b>
+                  </div>
+
+                  <div className={styles.stageRoad}>
+                    {stages.map((stage) => {
+                      const unlocked = isStageUnlocked(progress, stage);
+                      const completed = isStageCompleted(progress, stage);
+
+                      return (
+                        <button
+                          type="button"
+                          key={stage.id}
+                          className={`${styles.stageNode} ${
+                            completed ? styles.completedStage : ""
+                          } ${!unlocked ? styles.lockedStage : ""}`}
+                          onClick={() => openStage(stage)}
+                          title={stage.title}
+                        >
+                          <span>
+                            {completed ? "✓" : unlocked ? stage.number : "⌁"}
+                          </span>
+                          <small>{stage.boss ? "BOSS" : "MISSION"}</small>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {progress.badges.includes(world.badge) && (
+                    <div className={styles.badgeUnlocked}>
+                      ✦ {world.badge}
+                    </div>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className={styles.drivingZone}>
+        <div className={styles.drivingHeader}>
+          <div>
+            <small>FREE DRIVE MODE</small>
+            <h2>Neon Trading Highway</h2>
+          </div>
+
+          <p>Use A/D, arrow keys or the controls to move the vehicle.</p>
+        </div>
+
+        <div className={styles.highway}>
+          <div className={styles.highwayLights} />
+          <div className={styles.roadLines} />
+
+          <div
+            className={styles.car}
+            style={{ left: `${carPosition}%` }}
+          >
+            <div className={styles.carGlow} />
+            <div className={styles.carCabin}>
+              <span>TMGM</span>
+            </div>
+            <div className={styles.carBody} />
+            <i className={styles.wheelLeft} />
+            <i className={styles.wheelRight} />
+          </div>
+        </div>
+
+        <div className={styles.driveControls}>
+          <button
+            type="button"
+            onClick={() =>
+              setCarPosition((value) => Math.max(5, value - 5))
+            }
+          >
+            ← STEER LEFT
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setCarPosition((value) => Math.min(82, value + 5))
+            }
+          >
+            STEER RIGHT →
+          </button>
+        </div>
+      </section>
+
+      <MysteryBox
         progress={progress}
-        vehicleState={vehicleState}
-        district={activeDistrict}
+        setProgress={setProgress}
         soundEnabled={soundEnabled}
-        missionAvailable={missionAvailable}
-        gamePaused={gamePaused}
-        onToggleSound={toggleSound}
-        onOpenPhone={() => openPhone("home")}
-        onOpenMap={() => openPhone("map")}
-        onOpenMission={() =>
-          requestMission(nearestMission)
-        }
       />
 
-      <TMGMGuide
-        visible={guide.visible}
-        mood={guide.mood}
-        message={guide.message}
-        compact={
-          phoneOpen ||
-          missionOpen ||
-          mysteryBoxOpen
-        }
-        golden={guide.mood === "golden"}
-        onDismiss={() =>
-          setGuide((currentGuide) => ({
-            ...currentGuide,
-            visible: false,
-          }))
-        }
-      />
+      <section className={styles.disclaimer}>
+        <strong>Educational Demo Notice</strong>
+        <p>
+          This game is an educational and promotional simulation. It does
+          not provide investment advice, trading signals or guaranteed
+          results. All balances, points, charts and missions are fictional.
+          Trading leveraged products may result in the loss of capital.
+        </p>
+
+        <p>
+          This is a promotional demo version. Any reward displayed inside
+          the game does not represent a real prize or guarantee that it
+          will be awarded.
+        </p>
+      </section>
+
+      <footer className={styles.footer}>
+        <span>TMGM MARKET CITY • EDUCATIONAL EXPERIENCE</span>
+        <button type="button" onClick={handleReset}>
+          RESET PROGRESS
+        </button>
+      </footer>
 
       <GamePhone
-        key={phoneKey}
         open={phoneOpen}
+        onClose={() => setPhoneOpen(false)}
         progress={progress}
-        activeDistrict={activeDistrict}
-        initialApp={phoneApp}
         soundEnabled={soundEnabled}
-        onClose={closePhone}
-        onStartMission={startMission}
-        onFindNextMission={findMissionFromPhone}
-        onPurchaseUpgrade={handlePurchaseUpgrade}
-        onOpenMysteryBox={openMysteryBox}
-        onToggleSound={toggleSound}
+        setSoundEnabled={setSoundEnabled}
         onReset={handleReset}
       />
 
-      <MissionScreen
-        mission={activeMission}
-        open={missionOpen}
-        alreadyCompleted={
-          activeMission
-            ? isMissionCompleted(
-                progress,
-                activeMission
-              )
-            : false
-        }
-        onClose={closeMission}
-        onCorrect={handleMissionCorrect}
-        onWrong={handleMissionWrong}
-      />
-
-      <MysteryBox
-        open={mysteryBoxOpen}
+      <ChallengeModal
+        stage={selectedStage}
         progress={progress}
-        onClose={() => setMysteryBoxOpen(false)}
-        onOpened={handleBoxOpened}
-        onRestart={restartJourney}
+        onClose={() => setSelectedStage(null)}
+        onCorrect={handleCorrect}
+        onWrong={handleWrong}
       />
-
-      <MobileControls
-        missionAvailable={missionAvailable}
-        hidden={gamePaused}
-      />
-
-      <div className={styles.demoRibbon}>
-        PROMOTIONAL DEMO · EDUCATIONAL SIMULATION · NO
-        REAL PRIZE GUARANTEED
-      </div>
     </main>
   );
 }
