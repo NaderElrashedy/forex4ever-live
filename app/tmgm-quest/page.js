@@ -53,11 +53,14 @@ const GameCanvas = dynamic(
     ssr: false,
     loading: () => (
       <div className={styles.canvasLoading}>
-        <div className={styles.loadingCore}>T</div>
+        <div className={styles.loadingCore}>
+          <strong>T</strong>
+        </div>
 
-        <strong>BUILDING TMGM MARKET CITY</strong>
-
-        <span>Preparing the 3D world...</span>
+        <div>
+          <strong>BUILDING TMGM MARKET CITY</strong>
+          <span>Preparing the 3D world...</span>
+        </div>
       </div>
     ),
   }
@@ -99,9 +102,9 @@ function getInitialDistrict() {
   );
 }
 
-function extractProgress(result, fallback) {
+function extractProgress(result, fallbackProgress) {
   if (!result) {
-    return fallback;
+    return fallbackProgress;
   }
 
   if (result.progress) {
@@ -110,51 +113,73 @@ function extractProgress(result, fallback) {
 
   if (
     typeof result === "object" &&
-    Object.prototype.hasOwnProperty.call(result, "points")
+    Array.isArray(result.completedMissions)
   ) {
     return result;
   }
 
-  return fallback;
+  return fallbackProgress;
 }
 
-function findNextMission(currentProgress) {
-  if (!currentProgress) {
+function findNextMission(progress) {
+  if (!progress) {
     return MISSIONS[0] || null;
   }
 
-  const unlockedMissionNumber =
-    Number(currentProgress.unlockedMission) || 1;
-
-  const incompleteUnlockedMission = MISSIONS.find((mission) => {
-    const unlocked = isMissionUnlocked(
-      currentProgress,
-      mission.number
-    );
-
-    const completed = isMissionCompleted(
-      currentProgress,
-      mission.id
-    );
-
-    return unlocked && !completed;
-  });
-
-  if (incompleteUnlockedMission) {
-    return incompleteUnlockedMission;
-  }
+  const completedMissions = Array.isArray(
+    progress.completedMissions
+  )
+    ? progress.completedMissions
+    : [];
 
   return (
     MISSIONS.find(
-      (mission) => mission.number === unlockedMissionNumber
+      (mission) =>
+        !completedMissions.includes(mission.id) &&
+        isMissionUnlocked(progress, mission)
     ) ||
     MISSIONS.find(
-      (mission) =>
-        !isMissionCompleted(currentProgress, mission.id)
+      (mission) => !completedMissions.includes(mission.id)
     ) ||
-    MISSIONS[MISSIONS.length - 1] ||
     null
   );
+}
+
+function resolveMissionReference(missionReference) {
+  if (!missionReference) {
+    return null;
+  }
+
+  if (
+    typeof missionReference === "object" &&
+    missionReference.id
+  ) {
+    return (
+      MISSIONS.find(
+        (mission) => mission.id === missionReference.id
+      ) || missionReference
+    );
+  }
+
+  if (typeof missionReference === "number") {
+    return (
+      MISSIONS.find(
+        (mission) => mission.number === missionReference
+      ) || null
+    );
+  }
+
+  if (typeof missionReference === "string") {
+    return (
+      MISSIONS.find(
+        (mission) =>
+          mission.id === missionReference ||
+          String(mission.number) === missionReference
+      ) || null
+    );
+  }
+
+  return null;
 }
 
 export default function TMGMQuestPage() {
@@ -162,7 +187,6 @@ export default function TMGMQuestPage() {
   const readyGuideShownRef = useRef(false);
 
   const [hydrated, setHydrated] = useState(false);
-
   const [progress, setProgress] = useState(null);
 
   const [activeDistrict, setActiveDistrict] = useState(
@@ -190,7 +214,6 @@ export default function TMGMQuestPage() {
     useState(false);
 
   const [soundEnabled, setSoundEnabled] = useState(true);
-
   const [cityReady, setCityReady] = useState(false);
 
   const [deviceMode, setDeviceMode] = useState({
@@ -204,16 +227,67 @@ export default function TMGMQuestPage() {
     message: GUIDE_MESSAGES.welcome,
   });
 
-  const showGuide = useCallback((mood, message) => {
-    setGuide({
-      visible: true,
-      mood,
-      message,
-    });
-  }, []);
+  const gamePaused =
+    phoneOpen || missionOpen || mysteryBoxOpen;
+
+  const completedMissionCount =
+    progress?.completedMissions?.length || 0;
+
+  const districtMissions = useMemo(() => {
+    if (!activeDistrict?.id) {
+      return [];
+    }
+
+    return getDistrictMissions(activeDistrict.id) || [];
+  }, [activeDistrict]);
+
+  const nearestMission = useMemo(() => {
+    if (!progress || districtMissions.length === 0) {
+      return null;
+    }
+
+    const incompleteUnlockedMission = districtMissions.find(
+      (mission) =>
+        !isMissionCompleted(progress, mission) &&
+        isMissionUnlocked(progress, mission)
+    );
+
+    if (incompleteUnlockedMission) {
+      return incompleteUnlockedMission;
+    }
+
+    const incompleteMission = districtMissions.find(
+      (mission) => !isMissionCompleted(progress, mission)
+    );
+
+    if (incompleteMission) {
+      return incompleteMission;
+    }
+
+    return districtMissions[districtMissions.length - 1] || null;
+  }, [districtMissions, progress]);
+
+  const missionAvailable = Boolean(
+    nearestMission &&
+      Number(vehicleState.distance) <= 14 &&
+      !missionOpen &&
+      !phoneOpen &&
+      !mysteryBoxOpen
+  );
+
+  const showGuide = useCallback(
+    (mood, message, visible = true) => {
+      setGuide({
+        visible,
+        mood,
+        message,
+      });
+    },
+    []
+  );
 
   /*
-   * Load the locally saved game progress.
+   * Load locally saved progress.
    */
   useEffect(() => {
     const savedProgress = loadProgress();
@@ -223,7 +297,7 @@ export default function TMGMQuestPage() {
   }, []);
 
   /*
-   * Save progress whenever it changes.
+   * Save progress after every relevant change.
    */
   useEffect(() => {
     if (!hydrated || !progress) {
@@ -234,8 +308,8 @@ export default function TMGMQuestPage() {
   }, [hydrated, progress]);
 
   /*
-   * Unlock Web Audio after the player's first interaction.
-   * Browsers do not allow audio before a user interaction.
+   * Unlock browser audio after the player's first interaction.
+   * Browsers do not allow automatic sound before user input.
    */
   useEffect(() => {
     if (!soundEnabled) {
@@ -247,52 +321,59 @@ export default function TMGMQuestPage() {
         return;
       }
 
-      await unlockAudio();
+      const unlocked = await unlockAudio();
+
+      if (!unlocked) {
+        return;
+      }
 
       audioUnlockedRef.current = true;
 
       await startEngineSound(true);
 
-      const currentSpeed =
-        Number(
-          vehicleState?.speedKmh ?? vehicleState?.speed
-        ) || 0;
-
-      await updateEngineSound(
-        Math.abs(currentSpeed),
-        160,
-        false,
-        true
-      );
+      /*
+       * Start silently. The next vehicle update decides
+       * whether the engine should become audible.
+       */
+      await updateEngineSound(0, 160, false, true);
     };
 
     const handleKeyboardUnlock = (event) => {
-      const drivingKeys = [
+      const acceptedKeys = [
         "w",
         "W",
-        "ArrowUp",
         "s",
         "S",
-        "ArrowDown",
         "a",
         "A",
-        "ArrowLeft",
         "d",
         "D",
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
         "ArrowRight",
         " ",
       ];
 
-      if (drivingKeys.includes(event.key)) {
-        unlockGameAudio();
+      if (!acceptedKeys.includes(event.key)) {
+        return;
       }
+
+      unlockGameAudio();
     };
 
-    window.addEventListener("pointerdown", unlockGameAudio);
+    window.addEventListener("pointerdown", unlockGameAudio, {
+      passive: true,
+    });
+
     window.addEventListener("touchstart", unlockGameAudio, {
       passive: true,
     });
-    window.addEventListener("keydown", handleKeyboardUnlock);
+
+    window.addEventListener(
+      "keydown",
+      handleKeyboardUnlock
+    );
 
     return () => {
       window.removeEventListener(
@@ -310,11 +391,7 @@ export default function TMGMQuestPage() {
         handleKeyboardUnlock
       );
     };
-  }, [
-    soundEnabled,
-    vehicleState?.speed,
-    vehicleState?.speedKmh,
-  ]);
+  }, [soundEnabled]);
 
   /*
    * Enable or disable the complete audio system.
@@ -325,71 +402,91 @@ export default function TMGMQuestPage() {
     if (!soundEnabled) {
       stopEngineSound();
       audioUnlockedRef.current = false;
-      return;
-    }
-
-    if (audioUnlockedRef.current) {
-      startEngineSound(true);
     }
   }, [soundEnabled]);
 
   /*
-   * Change engine pitch and volume according to vehicle speed.
+   * Connect the vehicle speed to the engine sound.
+   *
+   * Important:
+   * - No engine sound while stopped.
+   * - No engine sound while the game is paused.
+   * - No engine sound while the phone, mission or box is open.
    */
   useEffect(() => {
     if (
       !soundEnabled ||
-      !audioUnlockedRef.current ||
-      !vehicleState
+      !audioUnlockedRef.current
     ) {
       return;
     }
 
     const currentSpeed = Math.abs(
       Number(
-        vehicleState.speedKmh ?? vehicleState.speed
-      ) || 0
+        vehicleState.speedKmh ?? vehicleState.speed ?? 0
+      )
     );
 
-    const accelerating =
+    const vehicleIsBraking = Boolean(
+      vehicleState.braking
+    );
+
+    const handbrakeIsActive = Boolean(
+      vehicleState.handbrake
+    );
+
+    const vehicleIsAccelerating =
       Boolean(vehicleState.accelerating) ||
-      (currentSpeed > 1 &&
-        !vehicleState.braking &&
-        !vehicleState.handbrake &&
+      (currentSpeed > 2 &&
+        !vehicleIsBraking &&
+        !handbrakeIsActive &&
         !gamePaused);
+
+    /*
+     * Opening the phone, a mission or the final box
+     * sends zero speed to the audio engine.
+     */
+    if (gamePaused) {
+      updateEngineSound(
+        0,
+        160,
+        false,
+        soundEnabled
+      );
+
+      return;
+    }
 
     updateEngineSound(
       currentSpeed,
       160,
-      accelerating,
-      true
+      vehicleIsAccelerating,
+      soundEnabled
     );
   }, [
     soundEnabled,
-    vehicleState?.speed,
-    vehicleState?.speedKmh,
-    vehicleState?.accelerating,
-    vehicleState?.braking,
-    vehicleState?.handbrake,
-    missionOpen,
-    phoneOpen,
-    mysteryBoxOpen,
+    gamePaused,
+    vehicleState.speed,
+    vehicleState.speedKmh,
+    vehicleState.accelerating,
+    vehicleState.braking,
+    vehicleState.handbrake,
   ]);
 
   /*
-   * Stop the engine when the browser tab becomes hidden.
+   * Stop the engine when the player leaves the page,
+   * changes the browser tab or minimizes the browser.
    */
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopEngineSound();
-        audioUnlockedRef.current = false;
-      }
-    };
-
-    const handlePageHide = () => {
+    const stopPageAudio = () => {
       stopEngineSound();
       audioUnlockedRef.current = false;
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPageAudio();
+      }
     };
 
     document.addEventListener(
@@ -397,7 +494,7 @@ export default function TMGMQuestPage() {
       handleVisibilityChange
     );
 
-    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pagehide", stopPageAudio);
 
     return () => {
       document.removeEventListener(
@@ -407,105 +504,58 @@ export default function TMGMQuestPage() {
 
       window.removeEventListener(
         "pagehide",
-        handlePageHide
+        stopPageAudio
       );
 
-      stopEngineSound();
+      stopPageAudio();
     };
   }, []);
 
-  const districtMissions = useMemo(() => {
-    if (!activeDistrict?.id) {
-      return [];
-    }
+  /*
+   * Display the mission-ready guide message once
+   * when the vehicle reaches an available gate.
+   */
+  useEffect(() => {
+    if (missionAvailable && !readyGuideShownRef.current) {
+      readyGuideShownRef.current = true;
 
-    return getDistrictMissions(activeDistrict.id) || [];
-  }, [activeDistrict]);
-
-  const nearestMission = useMemo(() => {
-    if (!progress || districtMissions.length === 0) {
-      return null;
-    }
-
-    const availableMission = districtMissions.find(
-      (mission) =>
-        isMissionUnlocked(progress, mission.number) &&
-        !isMissionCompleted(progress, mission.id)
-    );
-
-    if (availableMission) {
-      return availableMission;
-    }
-
-    const completedMission = [...districtMissions]
-      .reverse()
-      .find((mission) =>
-        isMissionCompleted(progress, mission.id)
+      showGuide(
+        "thinking",
+        GUIDE_MESSAGES.ready,
+        true
       );
 
-    if (completedMission) {
-      return completedMission;
+      return;
     }
 
-    return districtMissions[0] || null;
-  }, [districtMissions, progress]);
-
-  const distanceFromMission = Number(
-    vehicleState?.distance
-  );
-
-  const isNearMission =
-    Number.isFinite(distanceFromMission) &&
-    distanceFromMission <= 14;
-
-  const gamePaused =
-    phoneOpen || missionOpen || mysteryBoxOpen;
-
-  const missionAvailable =
-    Boolean(nearestMission) &&
-    isNearMission &&
-    !missionOpen &&
-    !phoneOpen &&
-    !mysteryBoxOpen;
-
-  /*
-   * Guide message when the vehicle reaches a mission gate.
-   */
-  useEffect(() => {
     if (!missionAvailable) {
       readyGuideShownRef.current = false;
-      return;
     }
-
-    if (readyGuideShownRef.current) {
-      return;
-    }
-
-    readyGuideShownRef.current = true;
-
-    showGuide("thinking", GUIDE_MESSAGES.ready);
   }, [missionAvailable, showGuide]);
 
-  /*
-   * Golden Castle guide message.
-   */
-  useEffect(() => {
-    if (activeDistrict?.id === "golden-castle") {
-      showGuide("golden", GUIDE_MESSAGES.golden);
-    }
-  }, [activeDistrict?.id, showGuide]);
-
   const openPhone = useCallback(
-    async (application = "home") => {
-      setPhoneApp(application);
+    async (appName = "home") => {
+      setPhoneApp(appName || "home");
       setPhoneKey((currentKey) => currentKey + 1);
       setPhoneOpen(true);
+
+      /*
+       * Immediately silence the vehicle when
+       * the City Phone opens.
+       */
+      if (audioUnlockedRef.current) {
+        updateEngineSound(0, 160, false, soundEnabled);
+      }
 
       if (soundEnabled) {
         await playSound("phone", true);
       }
 
-      showGuide("idle", GUIDE_MESSAGES.phone);
+      showGuide(
+        "idle",
+        GUIDE_MESSAGES.phone,
+        true
+      );
     },
     [showGuide, soundEnabled]
   );
@@ -514,63 +564,39 @@ export default function TMGMQuestPage() {
     setPhoneOpen(false);
   }, []);
 
-  const resolveMission = useCallback(
-    (missionReference) => {
-      if (!missionReference) {
-        return nearestMission;
-      }
-
-      if (
-        typeof missionReference === "object" &&
-        missionReference.id
-      ) {
-        return missionReference;
-      }
-
-      if (typeof missionReference === "number") {
-        return (
-          MISSIONS.find(
-            (mission) =>
-              mission.number === missionReference
-          ) || null
-        );
-      }
-
-      if (typeof missionReference === "string") {
-        return (
-          MISSIONS.find(
-            (mission) =>
-              mission.id === missionReference ||
-              String(mission.number) === missionReference
-          ) || null
-        );
-      }
-
-      return null;
-    },
-    [nearestMission]
-  );
-
   const startMission = useCallback(
-    async (missionReference) => {
+    (missionReference) => {
       if (!progress) {
         return;
       }
 
-      const mission = resolveMission(missionReference);
+      const mission =
+        resolveMissionReference(missionReference) ||
+        nearestMission;
 
       if (!mission) {
         return;
       }
 
-      if (!isMissionUnlocked(progress, mission.number)) {
-        showGuide("warning", GUIDE_MESSAGES.locked);
-
+      if (!isMissionUnlocked(progress, mission)) {
         if (soundEnabled) {
-          await playSound("wrong", true);
+          playSound("wrong", true);
         }
 
+        showGuide(
+          "warning",
+          GUIDE_MESSAGES.locked,
+          true
+        );
+
         return;
+      }
+
+      /*
+       * Silence the motor before opening the mission.
+       */
+      if (audioUnlockedRef.current) {
+        updateEngineSound(0, 160, false, soundEnabled);
       }
 
       setActiveMission(mission);
@@ -579,40 +605,62 @@ export default function TMGMQuestPage() {
 
       showGuide(
         "thinking",
-        mission.guideMessage ||
-          "Review the mission carefully before making your decision."
+        `Mission ${mission.number}: ${mission.title}`,
+        true
       );
     },
     [
+      nearestMission,
       progress,
-      resolveMission,
       showGuide,
       soundEnabled,
     ]
   );
 
-  const requestMission = useCallback(() => {
-    if (!nearestMission) {
-      return;
-    }
+  const requestMission = useCallback(
+    (missionReference) => {
+      if (
+        phoneOpen ||
+        missionOpen ||
+        mysteryBoxOpen
+      ) {
+        return;
+      }
 
-    if (!isNearMission) {
-      showGuide(
-        "thinking",
-        "Drive closer to the illuminated mission gate."
-      );
-      return;
-    }
+      const mission =
+        resolveMissionReference(missionReference) ||
+        nearestMission;
 
-    startMission(nearestMission);
-  }, [
-    nearestMission,
-    isNearMission,
-    showGuide,
-    startMission,
-  ]);
+      if (!mission) {
+        return;
+      }
 
-  const handleMissionCorrect = useCallback(async () => {
+      const distance = Number(vehicleState.distance);
+
+      if (Number.isFinite(distance) && distance > 14) {
+        showGuide(
+          "idle",
+          "Drive closer to the illuminated mission gate before entering.",
+          true
+        );
+
+        return;
+      }
+
+      startMission(mission);
+    },
+    [
+      missionOpen,
+      mysteryBoxOpen,
+      nearestMission,
+      phoneOpen,
+      showGuide,
+      startMission,
+      vehicleState.distance,
+    ]
+  );
+
+  const handleMissionCorrect = useCallback(() => {
     if (!progress || !activeMission) {
       return;
     }
@@ -630,22 +678,26 @@ export default function TMGMQuestPage() {
     setProgress(updatedProgress);
 
     if (soundEnabled) {
-      await playSound("success", true);
+      playSound("success", true);
 
       window.setTimeout(() => {
         playSound("coin", true);
       }, 180);
     }
 
-    showGuide("success", GUIDE_MESSAGES.success);
+    showGuide(
+      "success",
+      GUIDE_MESSAGES.success,
+      true
+    );
   }, [
-    progress,
     activeMission,
+    progress,
     showGuide,
     soundEnabled,
   ]);
 
-  const handleMissionWrong = useCallback(async () => {
+  const handleMissionWrong = useCallback(() => {
     if (!progress) {
       return;
     }
@@ -660,20 +712,28 @@ export default function TMGMQuestPage() {
     setProgress(updatedProgress);
 
     if (soundEnabled) {
-      await playSound("wrong", true);
+      playSound("wrong", true);
     }
 
-    showGuide("warning", GUIDE_MESSAGES.warning);
+    showGuide(
+      "warning",
+      GUIDE_MESSAGES.warning,
+      true
+    );
   }, [progress, showGuide, soundEnabled]);
 
+  const closeMission = useCallback(() => {
+    setMissionOpen(false);
+    setActiveMission(null);
+  }, []);
+
   const handlePurchaseUpgrade = useCallback(
-    async (upgradeType) => {
+    (upgradeType) => {
       if (!progress) {
-        return {
-          progress,
-          message: "Game progress is not ready.",
-        };
+        return null;
       }
+
+      const previousCoins = Number(progress.coins || 0);
 
       const result = purchaseUpgrade(
         progress,
@@ -685,18 +745,20 @@ export default function TMGMQuestPage() {
         progress
       );
 
-      setProgress(updatedProgress);
+      const newCoins = Number(
+        updatedProgress.coins || 0
+      );
 
       const purchaseSucceeded =
-        updatedProgress !== progress;
+        newCoins < previousCoins;
 
-      if (purchaseSucceeded && soundEnabled) {
-        await playSound("coin", true);
-      } else if (
-        result?.message &&
-        soundEnabled
-      ) {
-        await playSound("wrong", true);
+      setProgress(updatedProgress);
+
+      if (soundEnabled) {
+        playSound(
+          purchaseSucceeded ? "coin" : "wrong",
+          true
+        );
       }
 
       return result;
@@ -704,7 +766,7 @@ export default function TMGMQuestPage() {
     [progress, soundEnabled]
   );
 
-  const handleBoxOpened = useCallback(async () => {
+  const handleBoxOpened = useCallback(() => {
     if (!progress) {
       return;
     }
@@ -719,35 +781,101 @@ export default function TMGMQuestPage() {
     setProgress(updatedProgress);
 
     if (soundEnabled) {
-      await playSound("box", true);
+      playSound("box", true);
     }
 
     showGuide(
       "golden",
-      "The final chamber is open. Your Market City Champion achievement is ready."
+      GUIDE_MESSAGES.golden,
+      true
     );
   }, [progress, showGuide, soundEnabled]);
 
   const handleReset = useCallback(() => {
-    const confirmed = window.confirm(
+    const shouldReset = window.confirm(
       "Reset all TMGM Market City progress saved on this device?"
     );
 
-    if (!confirmed) {
+    if (!shouldReset) {
       return;
     }
 
     stopEngineSound();
     audioUnlockedRef.current = false;
 
-    const newProgress = resetProgress();
+    const freshProgress = resetProgress();
 
-    setProgress(newProgress);
+    setProgress(freshProgress);
     setActiveDistrict(getInitialDistrict());
-    setActiveMission(null);
-    setMissionOpen(false);
+    setVehicleState({
+      speed: 0,
+      speedKmh: 0,
+      distance: Infinity,
+      journeyProgress: 0,
+      braking: false,
+      handbrake: false,
+      accelerating: false,
+    });
+
     setPhoneOpen(false);
+    setMissionOpen(false);
+    setActiveMission(null);
     setMysteryBoxOpen(false);
+
+    showGuide(
+      "idle",
+      GUIDE_MESSAGES.welcome,
+      true
+    );
+  }, [showGuide]);
+
+  const findMissionFromPhone = useCallback(
+    (missionReference) => {
+      const mission =
+        resolveMissionReference(missionReference) ||
+        findNextMission(progress);
+
+      setPhoneOpen(false);
+
+      if (!mission) {
+        showGuide(
+          "success",
+          "All available missions have been completed.",
+          true
+        );
+
+        return;
+      }
+
+      const district = DISTRICTS.find(
+        (item) => item.id === mission.districtId
+      );
+
+      if (district) {
+        setActiveDistrict(district);
+      }
+
+      showGuide(
+        "thinking",
+        `GPS selected Mission ${mission.number}: ${mission.title}. Follow the illuminated route.`,
+        true
+      );
+    },
+    [progress, showGuide]
+  );
+
+  const restartJourney = useCallback(() => {
+    stopEngineSound();
+    audioUnlockedRef.current = false;
+
+    const freshProgress = resetProgress();
+
+    setProgress(freshProgress);
+    setMysteryBoxOpen(false);
+    setMissionOpen(false);
+    setActiveMission(null);
+    setPhoneOpen(false);
+    setActiveDistrict(getInitialDistrict());
 
     setVehicleState({
       speed: 0,
@@ -759,37 +887,12 @@ export default function TMGMQuestPage() {
       accelerating: false,
     });
 
-    showGuide("idle", GUIDE_MESSAGES.welcome);
-  }, [showGuide]);
-
-  const findMissionFromPhone = useCallback(() => {
-    const nextMission = findNextMission(progress);
-
-    if (!nextMission) {
-      return;
-    }
-
-    const missionDistrict = DISTRICTS.find(
-      (district) =>
-        district.id === nextMission.districtId
-    );
-
-    setPhoneOpen(false);
-
-    if (missionDistrict) {
-      setActiveDistrict(missionDistrict);
-    }
-
     showGuide(
-      "thinking",
-      `GPS selected mission ${nextMission.number}: ${nextMission.title}. Drive toward its illuminated district gate.`
+      "idle",
+      GUIDE_MESSAGES.welcome,
+      true
     );
-  }, [progress, showGuide]);
-
-  const restartJourney = useCallback(() => {
-    setMysteryBoxOpen(false);
-    handleReset();
-  }, [handleReset]);
+  }, [showGuide]);
 
   const toggleSound = useCallback(async () => {
     if (soundEnabled) {
@@ -800,121 +903,152 @@ export default function TMGMQuestPage() {
     }
 
     setSoundEnabled(true);
+    setAudioEnabled(true);
 
-    await unlockAudio();
+    const unlocked = await unlockAudio();
+
+    if (!unlocked) {
+      return;
+    }
 
     audioUnlockedRef.current = true;
 
     await startEngineSound(true);
 
-    const currentSpeed = Math.abs(
-      Number(
-        vehicleState?.speedKmh ?? vehicleState?.speed
-      ) || 0
-    );
-
-    await updateEngineSound(
-      currentSpeed,
-      160,
-      false,
-      true
-    );
-
+    /*
+     * Restart silently. The speed effect will increase
+     * the sound only when the vehicle moves.
+     */
+    await updateEngineSound(0, 160, false, true);
     await playSound("phone", true);
-  }, [
-    soundEnabled,
-    vehicleState?.speed,
-    vehicleState?.speedKmh,
-  ]);
+  }, [soundEnabled]);
 
   const openMysteryBox = useCallback(() => {
     if (!progress) {
       return;
     }
 
-    const completedCount =
-      progress.completedMissions?.length || 0;
-
-    if (completedCount < TOTAL_MISSIONS) {
-      showGuide(
-        "warning",
-        `Complete all ${TOTAL_MISSIONS} missions before entering the final Mystery Box chamber.`
-      );
-
+    if (completedMissionCount < TOTAL_MISSIONS) {
       if (soundEnabled) {
         playSound("wrong", true);
       }
 
+      showGuide(
+        "warning",
+        `Complete all ${TOTAL_MISSIONS} missions before entering the Mystery Box chamber.`,
+        true
+      );
+
       return;
+    }
+
+    /*
+     * Silence the vehicle before the final sequence.
+     */
+    if (audioUnlockedRef.current) {
+      updateEngineSound(0, 160, false, soundEnabled);
     }
 
     setPhoneOpen(false);
     setMysteryBoxOpen(true);
-    showGuide("golden", GUIDE_MESSAGES.golden);
-  }, [progress, showGuide, soundEnabled]);
+
+    showGuide(
+      "golden",
+      GUIDE_MESSAGES.golden,
+      true
+    );
+  }, [
+    completedMissionCount,
+    progress,
+    showGuide,
+    soundEnabled,
+  ]);
 
   const handleDistrictChange = useCallback(
-    (district) => {
-      if (!district) {
+    (districtReference) => {
+      let district = districtReference;
+
+      if (typeof districtReference === "string") {
+        district = DISTRICTS.find(
+          (item) => item.id === districtReference
+        );
+      }
+
+      if (!district?.id) {
         return;
       }
 
-      setActiveDistrict((currentDistrict) => {
-        if (currentDistrict?.id === district.id) {
-          return currentDistrict;
-        }
+      setActiveDistrict(district);
 
-        return district;
-      });
+      if (district.id === "golden-castle") {
+        showGuide(
+          "golden",
+          GUIDE_MESSAGES.golden,
+          true
+        );
+      }
     },
-    []
+    [showGuide]
   );
 
   const handleVehicleUpdate = useCallback(
-    (newVehicleState) => {
-      if (!newVehicleState) {
+    (nextVehicleState) => {
+      if (!nextVehicleState) {
         return;
       }
 
       setVehicleState((currentState) => ({
         ...currentState,
-        ...newVehicleState,
+        ...nextVehicleState,
       }));
     },
     []
   );
 
   const handleCityReady = useCallback((mode) => {
-    setCityReady(true);
-
     setDeviceMode({
       lowQuality: Boolean(mode?.lowQuality),
       reducedMotion: Boolean(mode?.reducedMotion),
     });
+
+    setCityReady(true);
   }, []);
 
   if (!hydrated || !progress) {
     return (
       <main className={styles.loadingPage}>
         <div className={styles.loadingCity}>
-          <div className={styles.loadingCore}>T</div>
+          <div className={styles.loadingCore}>
+            <strong>T</strong>
+          </div>
 
-          <strong>TMGM MARKET CITY 3D</strong>
+          <h1>TMGM MARKET CITY 3D</h1>
 
-          <span>Loading your locally saved journey...</span>
+          <p>Loading your locally saved journey...</p>
         </div>
       </main>
     );
   }
 
-  const completedMissions =
-    progress.completedMissions?.length || 0;
-
-  const mysteryBoxReady =
-    completedMissions >= TOTAL_MISSIONS;
-
   return (
     <main className={styles.gamePage}>
+      <GameCanvas
+        progress={progress}
+        gamePaused={gamePaused}
+        onDistrictChange={handleDistrictChange}
+        onVehicleUpdate={handleVehicleUpdate}
+        onMissionRequest={requestMission}
+        onTogglePhone={() => openPhone("home")}
+        onToggleMap={() => openPhone("map")}
+        onReady={handleCityReady}
+      />
+
+      {!cityReady && (
+        <div className={styles.worldPreparing}>
+          <span>INITIALIZING 3D CITY</span>
+        </div>
+      )}
+
       <div
         className={styles.cityVignette}
         aria-hidden="true"
@@ -925,7 +1059,7 @@ export default function TMGMQuestPage() {
         aria-hidden="true"
       />
 
-      <nav className={styles.gameNavigation}>
+      <header className={styles.gameNavigation}>
         <Link href="/" className={styles.gameBrand}>
           <span>T</span>
 
@@ -952,30 +1086,7 @@ export default function TMGMQuestPage() {
         <Link href="/" className={styles.exitGame}>
           EXIT CITY
         </Link>
-      </nav>
-
-      {!cityReady && (
-        <div className={styles.worldPreparing}>
-          INITIALIZING 3D CITY
-        </div>
-      )}
-
-      <GameCanvas
-        progress={progress}
-        gamePaused={gamePaused}
-        onDistrictChange={handleDistrictChange}
-        onVehicleUpdate={handleVehicleUpdate}
-        onMissionRequest={requestMission}
-        onTogglePhone={() => {
-          if (phoneOpen) {
-            closePhone();
-          } else {
-            openPhone("home");
-          }
-        }}
-        onToggleMap={() => openPhone("map")}
-        onReady={handleCityReady}
-      />
+      </header>
 
       <GameHUD
         progress={progress}
@@ -987,12 +1098,27 @@ export default function TMGMQuestPage() {
         onToggleSound={toggleSound}
         onOpenPhone={() => openPhone("home")}
         onOpenMap={() => openPhone("map")}
-        onOpenMission={requestMission}
+        onOpenMission={() =>
+          requestMission(nearestMission)
+        }
       />
 
-      <MobileControls
-        missionAvailable={missionAvailable}
-        hidden={gamePaused}
+      <TMGMGuide
+        visible={guide.visible}
+        mood={guide.mood}
+        message={guide.message}
+        compact={
+          phoneOpen ||
+          missionOpen ||
+          mysteryBoxOpen
+        }
+        golden={guide.mood === "golden"}
+        onDismiss={() =>
+          setGuide((currentGuide) => ({
+            ...currentGuide,
+            visible: false,
+          }))
+        }
       />
 
       <GamePhone
@@ -1018,14 +1144,11 @@ export default function TMGMQuestPage() {
           activeMission
             ? isMissionCompleted(
                 progress,
-                activeMission.id
+                activeMission
               )
             : false
         }
-        onClose={() => {
-          setMissionOpen(false);
-          setActiveMission(null);
-        }}
+        onClose={closeMission}
         onCorrect={handleMissionCorrect}
         onWrong={handleMissionWrong}
       />
@@ -1038,26 +1161,9 @@ export default function TMGMQuestPage() {
         onRestart={restartJourney}
       />
 
-      <TMGMGuide
-        visible={guide.visible}
-        mood={guide.mood}
-        message={guide.message}
-        compact={
-          phoneOpen ||
-          missionOpen ||
-          mysteryBoxOpen
-        }
-        golden={
-          guide.mood === "golden" ||
-          activeDistrict?.id === "golden-castle" ||
-          mysteryBoxReady
-        }
-        onDismiss={() =>
-          setGuide((currentGuide) => ({
-            ...currentGuide,
-            visible: false,
-          }))
-        }
+      <MobileControls
+        missionAvailable={missionAvailable}
+        hidden={gamePaused}
       />
 
       <div className={styles.demoRibbon}>
