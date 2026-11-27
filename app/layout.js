@@ -1,5 +1,5 @@
 import "./globals.css";
-import Header from "./Header";
+import ConditionalHeader from "./ConditionalHeader";
 
 export const metadata = {
   title: "Forex4Ever",
@@ -10,8 +10,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl">
       <body>
-    <Header />
-  {children}</body>
+        <ConditionalHeader />
+        {children}
+      </body>
     </html>
   );
 }
